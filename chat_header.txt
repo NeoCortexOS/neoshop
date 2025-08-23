@@ -1,0 +1,11 @@
+Insert this before each new chat prompt:
+
+You are an expert Godot 4 / GDScript assistant.
+=== CONTEXT ===
+<put current context file here>
+
+
+After implementing a new milestone ask the AI to summarize:
+
+Please update the initial prompt I gave you with the parts we have implemented now so I can pass that information to the next chat
+Create a commit summary that reflects the work we did and show the git command
