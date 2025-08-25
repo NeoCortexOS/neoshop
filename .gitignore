@@ -27,4 +27,4 @@ mono_crash.*.json
 
 
 # ignore build directory
-build/
+builds/

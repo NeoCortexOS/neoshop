@@ -1,0 +1,61 @@
+extends VBoxContainer
+class_name ItemRow
+
+signal long_pressed
+signal needed_changed(needed:bool)
+
+#@onready var check   = %NeedCheck
+#@onready var name_l  = %NameLabel
+#@onready var price_b = %PriceButton
+#@onready var desc_l  = %DescriptionLabel
+@onready var check   : CheckBox = $MainLine/NeedCheck
+@onready var name_l  : Label    = $MainLine/NameLabel
+@onready var price_b : Button   = $MainLine/PriceButton
+@onready var desc_l  : Label    = $DescriptionLabel
+
+var _item:Dictionary
+
+func setup(item:Dictionary):
+	_item = item
+	print("setup item: ", item)
+	update_from_item(item)
+	# Amount + unit as the CheckBox icon (placeholder – replace with real texture later)
+	var tex := _make_check_texture(str(item.amount), item.unit)
+	check.set_button_icon(tex)
+	check.toggled.connect(_on_needed_toggle)
+
+	# Long-press detector
+	var timer := Timer.new()
+	timer.wait_time = 0.6
+	timer.one_shot = true
+	add_child(timer)
+	$MainLine.gui_input.connect(func(ev):
+		if ev is InputEventScreenTouch and ev.pressed:
+			timer.start()
+		elif ev is InputEventScreenTouch and not ev.pressed:
+			timer.stop()
+		elif ev.is_action_released("ui_accept"):
+			long_pressed.emit()
+	)
+	timer.timeout.connect(long_pressed.emit)
+
+func update_from_item(item:Dictionary):
+	_item = item
+	print("update_from_item item.name: ", item.name)
+	if not desc_l :
+		push_error("ItemRow desc_l missing!")
+		return
+	name_l.text = item.name
+	desc_l.text = item.description
+	desc_l.visible = not item.description.is_empty()
+	price_b.text = "%.2f €" % (item.price_cents / 100.0)
+	check.button_pressed = item.needed
+
+func _make_check_texture(amount:String, unit:String) -> Texture2D:
+	# Placeholder – returns a tiny transparent 1×1 image
+	var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	return ImageTexture.create_from_image(img)
+
+func _on_needed_toggle(pressed:bool):
+	needed_changed.emit(pressed)

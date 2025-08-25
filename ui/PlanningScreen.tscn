@@ -1,0 +1,84 @@
+[gd_scene load_steps=3 format=3 uid="uid://b6x8o2d0m1y7k"]
+
+[ext_resource type="Script" uid="uid://udgg8w6seh5f" path="res://ui/PlanningScreen.gd" id="1"]
+[ext_resource type="Theme" uid="uid://ybvjkasxa0h8" path="res://themes/material.tres" id="1_valte"]
+
+[node name="PlanningScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_valte")
+script = ExtResource("1")
+
+[node name="MainVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 4
+
+[node name="TopBar" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="AppTitle" type="Label" parent="MainVBox/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Neoshop – %s (planning)"
+
+[node name="DBName" type="Label" parent="MainVBox/TopBar"]
+layout_mode = 2
+
+[node name="FilterBar" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Search" type="LineEdit" parent="MainVBox/FilterBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "🔍 search…"
+
+[node name="CategoryFilter" type="OptionButton" parent="MainVBox/FilterBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Scroll" type="ScrollContainer" parent="MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
+
+[node name="ItemList" type="VBoxContainer" parent="MainVBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="BottomBar" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_vertical = 8
+theme = ExtResource("1_valte")
+alignment = 1
+
+[node name="AddButton" type="Button" parent="MainVBox/BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "➕"
+
+[node name="SettingsButton" type="Button" parent="MainVBox/BottomBar"]
+layout_mode = 2
+text = "⚙️"
+
+[node name="CartButton" type="Button" parent="MainVBox/BottomBar"]
+layout_mode = 2
+text = "🛒"
+
+[node name="SeedButton" type="Button" parent="MainVBox/BottomBar"]
+layout_mode = 2
+text = "🌱 Seed"

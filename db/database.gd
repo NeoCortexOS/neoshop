@@ -7,17 +7,28 @@ var _db: SQLite
 func _ready():
 	_db = SQLite.new()
 	_db.path = ProjectSettings.globalize_path("user://neoshop.db")
-	_db.verbosity_level = SQLite.VERBOSE
+	#_db.verbosity_level = SQLite.VERBOSE
+	_db.verbosity_level = SQLite.QUIET
 	_db.open_db()
 	_migrate()
 
-func _migrate():
-	var schema := FileAccess.open(SCHEMA_FILE, FileAccess.READ).get_as_text()
-	_db.query(schema)
+func _migrate() -> void:
+	# Only run each DDL statement if the table does not yet exist
+	var tables := ["category", "item", "shop", "config"]
+	for table in tables:
+		if not _table_exists(table):
+			var ddl := FileAccess.open(SCHEMA_FILE, FileAccess.READ).get_as_text()
+			_db.query(ddl)
+			break   # once per new install is enough
 
+func _table_exists(table:String) -> bool:
+	_db.query_with_bindings("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", [table])
+	return _db.query_result.size() > 0
+	
 # --------------------------------------------------------------
 # Category
 # --------------------------------------------------------------
+@warning_ignore("shadowed_variable_base_class")
 func insert_category(name: String) -> int:
 	_db.query_with_bindings("INSERT INTO category(name) VALUES (?)", [name])
 	_db.query("SELECT last_insert_rowid() AS id")
@@ -70,3 +81,11 @@ func toggle_in_cart(id: int) -> void:
 func select_item_count() -> int:
 	_db.query("SELECT COUNT(*) AS c FROM item")
 	return int(_db.query_result[0]["c"])
+
+# Returns a user-friendly DB name (file name without path)
+func get_db_name() -> String:
+	return _db.path.get_file()
+
+func toggle_needed(id: int, needed: bool) -> void:
+	_db.query_with_bindings(
+		"UPDATE item SET needed = ? WHERE id = ?", [needed, id])

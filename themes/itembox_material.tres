@@ -1,0 +1,14 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://chil17duwnojv"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3ckoa"]
+bg_color = Color(0, 0.724711, 0.164597, 0.411765)
+
+[resource]
+Button/colors/icon_focus_color = Color(1, 1, 1, 0.196078)
+Button/colors/icon_hover_color = Color(1, 1, 1, 0.196078)
+Button/colors/icon_hover_pressed_color = Color(0, 0.784314, 0, 1)
+Button/colors/icon_normal_color = Color(1, 1, 1, 0.196078)
+Button/colors/icon_pressed_color = Color(0, 0.784314, 0, 0.760784)
+Button/constants/icon_max_width = 40
+Button/constants/line_spacing = 5
+Button/styles/pressed = SubResource("StyleBoxFlat_3ckoa")

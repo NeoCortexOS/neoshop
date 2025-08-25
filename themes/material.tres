@@ -1,0 +1,9 @@
+[gd_resource type="Theme" format=3 uid="uid://ybvjkasxa0h8"]
+
+[resource]
+Button/constants/align_to_largest_stylebox = 1
+Button/font_sizes/font_size = 32
+Label/font_sizes/font_size = 32
+LineEdit/font_sizes/font_size = 32
+PopupMenu/font_sizes/font_size = 32
+TextEdit/font_sizes/font_size = 32
