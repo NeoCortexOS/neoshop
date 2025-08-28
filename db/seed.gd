@@ -30,7 +30,7 @@ func _add(cat_id:int, aname:String, amount:float, unit:String, desc:String, pric
 		unit        = unit,
 		description = desc,
 		category_id = cat_id,
-		needed      = true,
+		needed      = false,
 		in_cart     = false,
 		last_bought = 0,
 		price_cents = price_c,

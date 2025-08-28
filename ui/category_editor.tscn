@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://b0r41dxaybeu8"]
+
+[ext_resource type="Script" uid="uid://fai8tjhqou1d" path="res://ui/category_editor.gd" id="1_8x7k2"]
+
+[node name="CategoryEditor" type="ConfirmationDialog"]
+title = "Manage Categories"
+size = Vector2i(450, 400)
+min_size = Vector2i(450, 400)
+script = ExtResource("1_8x7k2")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
+
+[node name="CategoriesContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="AddButton" type="Button" parent="VBoxContainer/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add Category"

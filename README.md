@@ -1,30 +1,90 @@
-# Neoshop – Planning Mode ✅
+# 🎉 Neoshop – Planning Mode **COMPLETE** ✅
 
 Offline-first shopping list for family & friends.  
-Built with **Godot 4.4.1 + GDScript + SQLite GDExtension**.
+Built with **Godot 4.4.1 + GDScript + SQLite GDExtension 4.5**.
 
-## Features (this release)
-- **Add / Edit / Delete** items via ItemEditor  
-- **Search & Category filter** (dropdown “All”)  
-- **Toggle “needed”** flag persisted instantly  
-- **Responsive UI** (phone, tablet, desktop)  
-- **Light / Dark / Material** themes ready  
-- **No internet required**
+---
 
-## Quick Start
-1. Clone repo  
-2. Open in Godot 4.4+ → Run once → seed data inserted  
-3. Press **Add** or **long-press** any row to edit.
+## ✨ **What's New in This Release**
 
-## How We Develop
-We (Kimi.ai & I) iterate **live** in chat sessions:
+### 🔄 **Database Magic**
+- **Sequential migration system** (v0 → v1 → v2)
+- **Android persistence** solved (no permissions needed)
+- **Schema evolution** with proper version tracking
 
-1.  Describe the next screen/feature  
-2.  Drop-in `.tscn` + `.gd` snippets  
-3.  Test → refine → commit  
-4.  Repeat
+### 🛠️ **Core Features**
+- ✅ **Full CRUD** items + categories
+- ✅ **Real-time search** across name/description/category
+- ✅ **Category filter** dropdown (All + specific)
+- ✅ **Long-press editing** (0.6s timer)
+- ✅ **Material theme** responsive across phone/tablet/desktop
 
-Session **#2** (this chat) delivered **PlanningScreen + ItemEditor**.
+### 🌱 **Enhanced Seeding**
+- **Progress dialog** during seeding
+- **8 categories** + **8 items** pre-loaded
+- **Category relationships** working perfectly
 
-## Next
-See `neoshop_context3.md` for roadmap.
+---
+
+## 🚀 **Quick Start**
+
+```bash
+# 1. Clone
+git clone [repo-url]
+cd neoshop
+
+# 2. Open in Godot 4.4+
+godot project.godot
+
+# 3. Run → seed data auto-inserted
+# 4. Press "Add" or long-press items to edit
+```
+
+---
+
+## 📱 **Android Ready**
+
+```bash
+# Build APK
+godot --export-release Android
+# Database persists across installs ✅
+```
+
+---
+
+## 🎯 **Live Development Flow**
+
+We iterate **live** in chat sessions:
+
+```mermaid
+graph LR
+	A[Describe feature] --> B[Drop .tscn/.gd]
+	B --> C[Test on device]
+	C --> D[Refine & commit]
+	D --> A
+```
+
+---
+
+## 📋 **Current Status**
+
+| Feature | Status |
+|---------|--------|
+| Planning Mode | ✅ Complete |
+| Category Management | ✅ Complete |
+| Database Migration | ✅ v0→2 Working |
+| Android Persistence | ✅ Solved |
+| Shopping Mode | 🔄 Next Milestone |
+| Multi-list Support | 🔄 Future |
+
+---
+
+## 🗂️ **Key Files**
+- `res://db/migration.gd` - Database evolution
+- `res://scripts/seed_manager.gd` - Enhanced seeding
+- `res://ui/category_editor.tscn` - Category CRUD
+- `res://ui/PlanningScreen.tscn` - Main interface
+
+---
+
+**Ready for M2 Android deployment!** 🚀

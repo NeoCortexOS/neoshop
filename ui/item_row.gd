@@ -34,7 +34,7 @@ func _ready() -> void:
 # --------------------------------------------------
 # Public API
 # --------------------------------------------------
-func setup(item: Dictionary) -> void:
+func setup_old(item: Dictionary) -> void:
 	# Wire the toggle button once
 	%NeedCheck.toggled.connect(func(toggled: bool):
 		needed_changed.emit(int(item["id"]), toggled)
@@ -55,6 +55,60 @@ func update_from_item(item: Dictionary) -> void:
 	%DescriptionLabel.text = desc
 	%DescriptionLabel.visible = not desc.is_empty()
 
+# In item_row.gd, update the setup method:
+func setup(item: Dictionary) -> void:
+	# Wire the toggle button once
+	%NeedCheck.toggled.connect(func(toggled: bool):
+		needed_changed.emit(int(item["id"]), toggled)
+	)
+	#_item_id = int(item.get("id", 0))
+	
+	# Safely access all fields with defaults
+	var name = str(item.get("name", ""))
+	var amount = float(item.get("amount", 0.0))
+	var unit = str(item.get("unit", ""))
+	var description = str(item.get("description", ""))
+	var category_id = int(item.get("category_id", -1))
+	var needed = bool(item.get("needed", false))
+	var in_cart = bool(item.get("in_cart", false))
+	var price_cents = int(item.get("price_cents", 0))
+	
+	# Update UI elements
+	%NameLabel.text = name
+	%NeedCheck.button_pressed = needed
+	
+	# Handle amount display
+	var amount_text = ""
+	if amount > 0:
+		amount_text = str(amount)
+		if unit and not unit.is_empty():
+			amount_text += "\n" + unit
+	%NeedCheck.text = amount_text
+	
+	# Handle category
+	%CategoryLabel.text = _get_category_name(category_id)
+	
+	# Handle price
+	if price_cents > 0:
+		%PriceButton.text = "€%.2f" % (price_cents / 100.0)
+		%PriceButton.visible = true
+	else:
+		%PriceButton.visible = false
+	
+	# Handle description
+	if description and not description.is_empty():
+		%DescriptionLabel.text = description
+		%DescriptionLabel.visible = true
+	else:
+		%DescriptionLabel.visible = false
+	
+	# Handle in_cart state
+	if in_cart:
+		modulate = Color(0.5, 0.5, 0.5)  # Gray out if in cart
+	else:
+		modulate = Color.WHITE
+		
+		
 # --------------------------------------------------
 # Helpers
 # --------------------------------------------------

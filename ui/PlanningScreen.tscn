@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://b6x8o2d0m1y7k"]
+[gd_scene load_steps=4 format=3 uid="uid://b6x8o2d0m1y7k"]
 
 [ext_resource type="Script" uid="uid://udgg8w6seh5f" path="res://ui/PlanningScreen.gd" id="1"]
 [ext_resource type="Theme" uid="uid://ybvjkasxa0h8" path="res://themes/material.tres" id="1_valte"]
+[ext_resource type="PackedScene" uid="uid://b0r41dxaybeu8" path="res://ui/category_editor.tscn" id="3_fh56x"]
 
 [node name="PlanningScreen" type="Control"]
 layout_mode = 3
@@ -44,6 +45,11 @@ layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "🔍 search…"
 
+[node name="CategoryEditButton" type="Button" parent="MainVBox/FilterBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "✏️"
+
 [node name="CategoryFilter" type="OptionButton" parent="MainVBox/FilterBar"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -82,3 +88,6 @@ text = "🛒"
 [node name="SeedButton" type="Button" parent="MainVBox/BottomBar"]
 layout_mode = 2
 text = "🌱 Seed"
+
+[node name="CategoryEditor" parent="." instance=ExtResource("3_fh56x")]
+unique_name_in_owner = true

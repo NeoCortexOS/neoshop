@@ -10,6 +10,8 @@ class_name PlanningScreen
 @onready var settings  : Button            = $MainVBox/BottomBar/SettingsButton
 @onready var cart_btn  : Button            = $MainVBox/BottomBar/CartButton
 @onready var seed_btn  : Button            = $MainVBox/BottomBar/SeedButton
+@onready var category_editor: ConfirmationDialog = %CategoryEditor
+
 
 var rows : Dictionary = {}   # int -> ItemRow
 
@@ -24,6 +26,9 @@ func _ready() -> void:
 	settings.pressed.connect(_on_settings)
 	cart_btn.pressed.connect(_on_cart)
 	seed_btn.pressed.connect(_on_seed)
+	
+	%CategoryEditButton.pressed.connect(_on_category_edit_pressed)
+	category_editor.category_saved.connect(_on_categories_changed)
 
 func _populate_category_filter() -> void:
 	category.clear()
@@ -31,7 +36,48 @@ func _populate_category_filter() -> void:
 	for cat in DB.select_categories():
 		category.add_item(str(cat["name"]), int(cat["id"]))
 	category.selected = 0
+	
+	
+func _on_seed() -> void:
+	var confirm = ConfirmationDialog.new()
+	confirm.title = "Reset Database?"
+	confirm.dialog_text = "This will add sample categories and items to your database.\n\nExisting data will be preserved.\n\nContinue?"
+	
+	confirm.confirmed.connect(func():
+		var seed_manager = preload("res://scripts/seed_manager.gd").new()
+		seed_manager.seed_completed.connect(func(items, cats): 
+			print("Seeding complete: %d items, %d categories" % [items, cats])
+		)
+		add_child(seed_manager)
+		seed_manager.seed_database()
+	)
+	
+	confirm.canceled.connect(func():
+		print("Seeding cancelled")
+	)
+		
+	get_tree().root.add_child(confirm)
+	confirm.popup_centered()
+	_refresh()
 
+		
+func _refresh_category_filter():
+	# Clear existing items except "All"
+	category.clear()
+	category.add_item("All", -2)  # -2 for "All" selection (matches your existing code)
+	
+	# Load fresh categories from database
+	var categories = DB.select_categories()
+	categories.sort_custom(func(a, b): return a["name"].to_lower() < b["name"].to_lower())
+	
+	# Add categories to dropdown
+	for cat in categories:
+		category.add_item(str(cat["name"]), int(cat["id"]))
+	
+	# Reset selection to "All"
+	category.selected = 0
+	
+	
 func _refresh() -> void:
 	var search_txt : String = search.text.to_lower()
 	var cat_id     : int    = category.get_item_id(category.selected)
@@ -122,10 +168,6 @@ func _on_settings() -> void:
 func _on_cart() -> void:
 	get_tree().change_scene_to_file("res://ui/shopping_screen.tscn")
 
-
-func _on_seed() -> void:
-	get_tree().change_scene_to_file("res://test/seed_scene.tscn")
-
 	
 # ------------------------------------------------------------------
 func _get_editor() -> Window:
@@ -136,3 +178,10 @@ func _get_editor() -> Window:
 		var dlg := AcceptDialog.new()
 		dlg.dialog_text = "Editor scene missing – stub only"
 		return dlg
+
+func _on_category_edit_pressed():
+	category_editor.popup_category_editor()
+
+func _on_categories_changed():
+	_refresh_category_filter()
+	_refresh()

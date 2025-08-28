@@ -7,5 +7,7 @@ You are an expert Godot 4 / GDScript assistant.
 
 After implementing a new milestone ask the AI to summarize:
 
-Please update the initial prompt I gave you with the parts we have implemented now so I can pass that information to the next chat
-Create a commit summary that reflects the work we did and show the git command
+Let us wrap up this session.
+Please update the initial prompt (neoshop_context3.md) I gave you with the parts we have implemented now so I can pass that information to the next chat.
+
+Create a github commit summary that reflects the work we did and show the git commit command
