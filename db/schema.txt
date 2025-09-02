@@ -1,31 +1,31 @@
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS category (
-    id   INTEGER PRIMARY KEY,
-    name TEXT UNIQUE
+	id   INTEGER PRIMARY KEY,
+	name TEXT UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS item (
-    id          INTEGER PRIMARY KEY,
-    name        TEXT NOT NULL,
-    amount      REAL,
-    unit        TEXT,
-    description TEXT,
-    category_id INTEGER REFERENCES category(id) ON DELETE SET NULL,
-    needed      BOOLEAN DEFAULT 0,
-    in_cart     BOOLEAN DEFAULT 0,
-    last_bought INTEGER,
-    price_cents INTEGER,
-    on_sale     BOOLEAN DEFAULT 0
+	id          INTEGER PRIMARY KEY,
+	name        TEXT NOT NULL,
+	amount      REAL,
+	unit        TEXT,
+	description TEXT,
+	category_id INTEGER REFERENCES category(id) ON DELETE SET NULL,
+	needed      BOOLEAN DEFAULT 0,
+	in_cart     BOOLEAN DEFAULT 0,
+	last_bought INTEGER,
+	price_cents INTEGER,
+	on_sale     BOOLEAN DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS shop (
-    id         INTEGER PRIMARY KEY,
-    name       TEXT UNIQUE,
-    sort_order TEXT
+	id         INTEGER PRIMARY KEY,
+	name       TEXT UNIQUE,
+	sort_order TEXT
 );
 
 CREATE TABLE IF NOT EXISTS config (
-    key   TEXT PRIMARY KEY,
-    value TEXT
+	key   TEXT PRIMARY KEY,
+	value TEXT
 );

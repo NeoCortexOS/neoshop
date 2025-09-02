@@ -28,3 +28,6 @@ mono_crash.*.json
 
 # ignore build directory
 builds/
+
+# ignore my temporary notes
+notes.txt

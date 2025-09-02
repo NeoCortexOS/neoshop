@@ -8,27 +8,31 @@ class_name PlanningScreen
 @onready var item_list : VBoxContainer     = $MainVBox/Scroll/ItemList
 @onready var add_btn   : Button            = $MainVBox/BottomBar/AddButton
 @onready var settings  : Button            = $MainVBox/BottomBar/SettingsButton
-@onready var cart_btn  : Button            = $MainVBox/BottomBar/CartButton
+@onready var toggle_shopping_mode_btn  : Button = $MainVBox/BottomBar/ToggleShoppingModeButton
 @onready var seed_btn  : Button            = $MainVBox/BottomBar/SeedButton
 @onready var category_editor: ConfirmationDialog = %CategoryEditor
 
-
 var rows : Dictionary = {}   # int -> ItemRow
+var shopping_mode : bool = false
 
 func _ready() -> void:
 	db_label.text = ""
-	%AppTitle.text = "Neoshop – %s (planning)" % DB.get_db_name()
+	_update_app_title()
 	_populate_category_filter()
 	_refresh()
 	search.text_changed.connect(func(_t): _refresh())
 	category.item_selected.connect(func(_t): _refresh())
 	add_btn.pressed.connect(_on_add)
 	settings.pressed.connect(_on_settings)
-	cart_btn.pressed.connect(_on_cart)
+	toggle_shopping_mode_btn.pressed.connect(_on_shopping_toggle)
 	seed_btn.pressed.connect(_on_seed)
 	
 	%CategoryEditButton.pressed.connect(_on_category_edit_pressed)
 	category_editor.category_saved.connect(_on_categories_changed)
+
+func _update_app_title() -> void:
+	var mode = "shopping" if shopping_mode else "planning"
+	%AppTitle.text = "Neoshop – %s (%s)" % [DB.get_db_name(), mode]
 
 func _populate_category_filter() -> void:
 	category.clear()
@@ -36,7 +40,6 @@ func _populate_category_filter() -> void:
 	for cat in DB.select_categories():
 		category.add_item(str(cat["name"]), int(cat["id"]))
 	category.selected = 0
-	
 	
 func _on_seed() -> void:
 	var confirm = ConfirmationDialog.new()
@@ -47,6 +50,7 @@ func _on_seed() -> void:
 		var seed_manager = preload("res://scripts/seed_manager.gd").new()
 		seed_manager.seed_completed.connect(func(items, cats): 
 			print("Seeding complete: %d items, %d categories" % [items, cats])
+			_refresh()
 		)
 		add_child(seed_manager)
 		seed_manager.seed_database()
@@ -59,12 +63,11 @@ func _on_seed() -> void:
 	get_tree().root.add_child(confirm)
 	confirm.popup_centered()
 	_refresh()
-
 		
 func _refresh_category_filter():
 	# Clear existing items except "All"
 	category.clear()
-	category.add_item("All", -2)  # -2 for "All" selection (matches your existing code)
+	category.add_item("All", -2)
 	
 	# Load fresh categories from database
 	var categories = DB.select_categories()
@@ -77,78 +80,100 @@ func _refresh_category_filter():
 	# Reset selection to "All"
 	category.selected = 0
 	
-	
 func _refresh() -> void:
 	var search_txt : String = search.text.to_lower()
 	var cat_id     : int    = category.get_item_id(category.selected)
-
-	print("--- _refresh ---")
-	print("search_txt = '", search_txt, "'  cat_id = ", cat_id)
 	
 	var items : Array[Dictionary] = DB.select_items()
-	#print("raw items from DB: ", items.size(), " rows")
-	#for it in items:
-		#print("  ", it)
-		
+	
 	# clear old rows
 	for child in item_list.get_children():
+		if child is ItemRow:
+			child.long_pressed.disconnect(_edit_item)  # Disconnect signal
 		child.queue_free()
 	rows.clear()
 	
-	# Filter
-	items = items.filter(func(it: Dictionary) -> bool:
-		var matches : bool = search_txt.is_empty() or str(it["name"]).to_lower().contains(search_txt)
-		if cat_id != -2:
-			matches = matches and int(it["category_id"]) == cat_id
-		return matches
-	)
+	# Filter based on mode
+	if shopping_mode:
+		# Shopping mode: only needed items
+		items = items.filter(func(it: Dictionary) -> bool:
+			var matches_needed = bool(it.get("needed", false))
+			var matches_search = search_txt.is_empty() or str(it["name"]).to_lower().contains(search_txt)
+			var matches_category = cat_id == -2 or int(it["category_id"]) == cat_id
+			return matches_needed and matches_search and matches_category
+		)
+		
+		# Sort for shopping mode
+		items.sort_custom(func(a, b):
+			var a_in_cart = bool(a.get("in_cart", false))
+			var b_in_cart = bool(b.get("in_cart", false))
+			
+			if a_in_cart != b_in_cart:
+				return !a_in_cart  # False first (not in cart)
+			
+			if !a_in_cart and !b_in_cart:
+				# Both not in cart, sort by category
+				return int(a.get("category_id", 0)) < int(b.get("category_id", 0))
+			
+			# Both in cart, sort by last_bought (newest first)
+			var a_last = int(a.get("last_bought", 0))
+			var b_last = int(b.get("last_bought", 0))
+			return b_last < a_last  # Descending order
+		)
+	else:
+		# Planning mode: regular filtering
+		items = items.filter(func(it: Dictionary) -> bool:
+			var matches : bool = search_txt.is_empty() or str(it["name"]).to_lower().contains(search_txt)
+			if cat_id != -2:
+				matches = matches and int(it["category_id"]) == cat_id
+			return matches
+		)
+		
+		# Planning mode: sort by name
+		items.sort_custom(func(a, b): 
+			return str(a["name"]).to_lower() < str(b["name"]).to_lower()
+		)
 
 	# Sync UI
-	var existing : Array = rows.keys()
+	var items_count: int = 0
 	for it in items:
+		items_count += 1
 		var id : int = int(it["id"])
-		var row : ItemRow = rows.get(id)
-		if not row:
-			row = preload("res://ui/item_row.tscn").instantiate() as ItemRow
-			row.setup(it)
-			row.long_pressed.connect(_edit_item.bind(id))
-			row.needed_changed.connect(DB.toggle_needed)
-			item_list.add_child(row)
-			rows[id] = row
-		else:
-			row.update_from_item(it)
-		existing.erase(id)
+		var row : ItemRow = preload("res://ui/item_row.tscn").instantiate() as ItemRow
+		row.setup(it)
+		row.set_shopping_mode(shopping_mode)
+		row.long_pressed.connect(_edit_item)
+		row.needed_changed.connect(DB.toggle_needed)
+		row.in_cart_changed.connect(_on_in_cart_changed)
+		item_list.add_child(row)
+		rows[id] = row
+	
+	# Update UI for shopping mode - only hide add button
+	#add_btn.visible = !shopping_mode
 
-	# Remove deleted rows
-	for id in existing:
-		rows[id].queue_free()
-		rows.erase(id)
+	print("_refresh items: ", items_count, " shopping_mode = ", shopping_mode)
 
 
 func _open_editor(id: int) -> void:
-	var sc := %Scroll   # give ScrollContainer a unique name
-	sc.scroll_vertical = 0           # optional: reset scroll
-	sc.mouse_filter = Control.MOUSE_FILTER_IGNORE  # ← no scroll grab
+	print("open_editor: ", id)
+	var sc := %Scroll
+	sc.scroll_vertical = 0
+	sc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var popup := preload("res://ui/item_editor.tscn").instantiate()
 	popup.item_saved.connect(func():
-		sc.mouse_filter = Control.MOUSE_FILTER_PASS   # restore
-		print("item_saved mouse restored")
+		sc.mouse_filter = Control.MOUSE_FILTER_PASS
 		_refresh()
 	)
 	popup.item_canceled.connect(func():
-		sc.mouse_filter = Control.MOUSE_FILTER_PASS   # restore
-		print("item_cancelled mouse restored")
+		sc.mouse_filter = Control.MOUSE_FILTER_PASS
 		_refresh()
 	)
 	popup.item_deleted.connect(func():
-		sc.mouse_filter = Control.MOUSE_FILTER_PASS   # restore
-		print("item_deleted mouse restored")
+		sc.mouse_filter = Control.MOUSE_FILTER_PASS
 		_refresh()
 	)
 	add_child(popup)
-	popup.size = Vector2i(360, 480)
-	popup.position = Vector2i(get_viewport().get_visible_rect().get_center()) - popup.size / 2
 	if id != -1:
 		popup.edit_item(id)
 	else:
@@ -156,28 +181,33 @@ func _open_editor(id: int) -> void:
 	popup.show()
 
 func _edit_item(id: int) -> void:
+	print("edit_item: ", id)
 	_open_editor(id)
 
 func _on_add() -> void:
 	_open_editor(-1)
 	
-	
 func _on_settings() -> void:
 	get_tree().change_scene_to_file("res://ui/settings.tscn")
 
-func _on_cart() -> void:
-	get_tree().change_scene_to_file("res://ui/shopping_screen.tscn")
+func _on_shopping_toggle() -> void:
+	shopping_mode = !shopping_mode
+	#toggle_shopping_mode_btn.text = "📋" if shopping_mode else "🛒"
+	# Preload the icons (use preload for performance, or load() if paths are dynamic)
+	var notepad_icon = preload("res://icons/emoji_u1f5d2.svg")
+	#var cart_icon = preload("res://icons/cart.png")
+	var cart_icon = preload("res://icons/cart.svg")
 
-	
-# ------------------------------------------------------------------
-func _get_editor() -> Window:
-	print("using real editor: ", ResourceLoader.exists("res://ui/item_editor.tscn"))
-	if ResourceLoader.exists("res://ui/item_editor.tscn"):
-		return preload("res://ui/item_editor.tscn").instantiate() as Window
-	else:
-		var dlg := AcceptDialog.new()
-		dlg.dialog_text = "Editor scene missing – stub only"
-		return dlg
+	# Set the button's icon based on the condition
+	toggle_shopping_mode_btn.icon = notepad_icon if shopping_mode else cart_icon
+	#toggle_shopping_mode_btn.icon = res://icons/cross.png if shopping_mode else res://icons/cart.png
+	_update_app_title()
+	_refresh()
+
+func _on_in_cart_changed(item_id: int) -> void:
+	DB.toggle_in_cart(item_id)
+	_refresh()
+	print("in_cart_changed")
 
 func _on_category_edit_pressed():
 	category_editor.popup_category_editor()
@@ -185,3 +215,12 @@ func _on_category_edit_pressed():
 func _on_categories_changed():
 	_refresh_category_filter()
 	_refresh()
+
+# ------------------------------------------------------------------
+func _get_editor() -> Window:
+	if ResourceLoader.exists("res://ui/item_editor.tscn"):
+		return preload("res://ui/item_editor.tscn").instantiate() as Window
+	else:
+		var dlg := AcceptDialog.new()
+		dlg.dialog_text = "Editor scene missing – stub only"
+		return dlg

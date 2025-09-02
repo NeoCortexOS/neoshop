@@ -11,6 +11,10 @@ func _ready() -> void:
 	#print("Item Editor _ready")
 	#show()
 	_populate_categories()
+	%NeedBtn.pressed.connect(_on_need)
+	%CartBtn.pressed.connect(_on_cart)
+	%MinusBtn.pressed.connect(_on_minus)
+	%PlusBtn.pressed.connect(_on_plus)
 	%SaveBtn.pressed.connect(_on_save)
 	%CancelBtn.pressed.connect(_on_cancel)
 	%DeleteBtn.pressed.connect(_on_delete)
@@ -51,6 +55,8 @@ func _clear_fields() -> void:
 	%PriceEdit.text = "0"
 	%DescriptionEdit.text = ""
 	%CategoryOption.selected = 0
+	%NeedBtn.button_pressed = false
+	%CartBtn.button_pressed = false
 	%DeleteBtn.visible    = false
 
 
@@ -65,6 +71,8 @@ func _populate_fields(it: Dictionary) -> void:
 		if int(_categories[i]["id"]) == cat_id:
 			%CategoryOption.selected = i
 			break
+	%NeedBtn.button_pressed = bool(it["needed"])
+	%CartBtn.button_pressed = bool(it["in_cart"])
 
 func _on_save() -> void:
 	var p := {
@@ -74,8 +82,8 @@ func _on_save() -> void:
 		description = %DescriptionEdit.text,
 		category_id = %CategoryOption.get_item_id(%CategoryOption.selected),
 		price_cents = int(%PriceEdit.text.to_float() * 100.0),
-		needed      = true,
-		in_cart     = false,
+		needed      = %NeedBtn.button_pressed,
+		in_cart     = %CartBtn.button_pressed,
 		last_bought = 0,
 		on_sale     = false
 	}
@@ -89,6 +97,21 @@ func _on_save() -> void:
 	queue_free()
 
 
+func _on_need():
+	pass
+
+
+func _on_cart():
+	pass	
+	
+	
+func _on_minus():
+	%AmountEdit.text = str(%AmountEdit.text.to_float() - 1)
+	
+func _on_plus():
+	%AmountEdit.text = str(%AmountEdit.text.to_float() + 1)
+	
+	
 func _on_delete() -> void:
 	if _item_id != -1:
 		DB.delete_item(_item_id)

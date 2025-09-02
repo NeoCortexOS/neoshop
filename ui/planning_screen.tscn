@@ -1,8 +1,11 @@
-[gd_scene load_steps=4 format=3 uid="uid://b6x8o2d0m1y7k"]
+[gd_scene load_steps=7 format=3 uid="uid://b6x8o2d0m1y7k"]
 
-[ext_resource type="Script" uid="uid://udgg8w6seh5f" path="res://ui/PlanningScreen.gd" id="1"]
-[ext_resource type="Theme" uid="uid://ybvjkasxa0h8" path="res://themes/material.tres" id="1_valte"]
-[ext_resource type="PackedScene" uid="uid://b0r41dxaybeu8" path="res://ui/category_editor.tscn" id="3_fh56x"]
+[ext_resource type="Theme" uid="uid://ybvjkasxa0h8" path="res://themes/material.tres" id="1_5w1wj"]
+[ext_resource type="Script" uid="uid://udgg8w6seh5f" path="res://ui/planning_screen.gd" id="2_f6ibo"]
+[ext_resource type="PackedScene" uid="uid://b0r41dxaybeu8" path="res://ui/category_editor.tscn" id="3_467qh"]
+[ext_resource type="Texture2D" uid="uid://b53vjde25n6go" path="res://icons/bright_plus_inkscape.svg" id="3_f6ibo"]
+[ext_resource type="Texture2D" uid="uid://dqt58lxre8w5q" path="res://icons/emoji_u2699.svg" id="4_2w63m"]
+[ext_resource type="Texture2D" uid="uid://cgxxpdiymb2xd" path="res://icons/cart.svg" id="5_pgv0f"]
 
 [node name="PlanningScreen" type="Control"]
 layout_mode = 3
@@ -11,8 +14,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_valte")
-script = ExtResource("1")
+theme = ExtResource("1_5w1wj")
+script = ExtResource("2_f6ibo")
 
 [node name="MainVBox" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -37,6 +40,7 @@ text = "Neoshop – %s (planning)"
 layout_mode = 2
 
 [node name="FilterBar" type="HBoxContainer" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_vertical = 0
 
@@ -67,27 +71,33 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="BottomBar" type="HBoxContainer" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_vertical = 8
-theme = ExtResource("1_valte")
+theme = ExtResource("1_5w1wj")
 alignment = 1
 
 [node name="AddButton" type="Button" parent="MainVBox/BottomBar"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
-text = "➕"
+icon = ExtResource("3_f6ibo")
 
 [node name="SettingsButton" type="Button" parent="MainVBox/BottomBar"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "⚙️"
+icon = ExtResource("4_2w63m")
 
-[node name="CartButton" type="Button" parent="MainVBox/BottomBar"]
+[node name="ToggleShoppingModeButton" type="Button" parent="MainVBox/BottomBar"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "🛒"
+icon = ExtResource("5_pgv0f")
 
 [node name="SeedButton" type="Button" parent="MainVBox/BottomBar"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "🌱 Seed"
 
-[node name="CategoryEditor" parent="." instance=ExtResource("3_fh56x")]
+[node name="CategoryEditor" parent="." instance=ExtResource("3_467qh")]
 unique_name_in_owner = true
+position = Vector2i(0, 36)

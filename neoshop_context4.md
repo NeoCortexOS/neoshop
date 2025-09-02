@@ -42,31 +42,31 @@ _db.query_result  # ✅ Proper result access
 ```sql
 -- Updated with AUTOINCREMENT
 CREATE TABLE item (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    amount REAL,
-    unit TEXT,
-    description TEXT,
-    category_id INTEGER REFERENCES category(id),
-    needed BOOLEAN DEFAULT 0,
-    in_cart BOOLEAN DEFAULT 0,
-    last_bought INTEGER,
-    price_cents INTEGER,
-    on_sale BOOLEAN DEFAULT 0
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT NOT NULL,
+	amount REAL,
+	unit TEXT,
+	description TEXT,
+	category_id INTEGER REFERENCES category(id),
+	needed BOOLEAN DEFAULT 0,
+	in_cart BOOLEAN DEFAULT 0,
+	last_bought INTEGER,
+	price_cents INTEGER,
+	on_sale BOOLEAN DEFAULT 0
 );
 
 CREATE TABLE category (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT UNIQUE
 );
 ```
 
 ### **Migration Flow (NEW)**
 ```mermaid
 graph LR
-    A[Version 0] -->|Create tables| B[Version 1]
-    B -->|Add in_cart column| C[Version 2]
-    C -->|Future updates| D[Version 3+]
+	A[Version 0] -->|Create tables| B[Version 1]
+	B -->|Add in_cart column| C[Version 2]
+	C -->|Future updates| D[Version 3+]
 ```
 
 ### **Seed Data Results**

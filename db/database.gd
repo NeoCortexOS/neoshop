@@ -144,10 +144,12 @@ func delete_item(id: int) -> void:
 func toggle_needed(id: int, needed: bool) -> void:
 	_db.query_with_bindings(
 		"UPDATE item SET needed = ? WHERE id = ?", [needed, id])
+	print("DB toggle_needed id: ", id, " need: ", needed)
 
 
 func toggle_in_cart(id: int) -> void:
 	_db.query_with_bindings("UPDATE item SET in_cart = NOT in_cart WHERE id = ?", [id])
+	print("DB toggle_in_cart, id: ", id)
 
 
 func select_item_count() -> int:

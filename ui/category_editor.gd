@@ -23,6 +23,7 @@ func popup_category_editor():
 	_load_categories()
 	popup_centered()
 
+
 func _load_categories():
 	# Clear existing inputs
 	for child in categories_container.get_children():

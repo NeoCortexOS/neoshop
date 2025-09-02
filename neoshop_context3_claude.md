@@ -1,7 +1,7 @@
 # Neoshop – Complete Project Context & Development Guide
 
 **Offline-first shopping list app for families**  
-Built with Godot 4.4.1 + GDScript + SQLite GDExtension  
+Built with Godot 4.4.1 + GDScript + SQLite GDExtension  4.5
 Target: Android (primary), tablets/PC supported  
 License: MIT, open-source
 
