@@ -1,0 +1,27 @@
+[gd_resource type="Theme" load_steps=4 format=3 uid="uid://15acj4odsbe2"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7s84f"]
+bg_color = Color(0, 0.784314, 0, 0.760784)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxDone"]
+bg_color = Color(0.82, 0.82, 0.82, 0.65)
+border_color = Color(0.6, 0.6, 0.6, 0.4)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxNormal"]
+bg_color = Color(0.97, 0.97, 0.97, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[resource]
+Button/colors/font_color = Color(1, 1, 1, 1)
+Button/font_sizes/font_size = 32
+Button/styles/pressed = SubResource("StyleBoxFlat_7s84f")
+Label/font_sizes/font_size = 32
+VBoxContainer/styles/done = SubResource("StyleBoxDone")
+VBoxContainer/styles/normal = SubResource("StyleBoxNormal")

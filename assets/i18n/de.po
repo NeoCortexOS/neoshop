@@ -1,0 +1,245 @@
+# LANGUAGE translation for Neoshop for the following files:
+# res://ui/setup_screen.gd
+# res://ui/setup_screen.tscn
+# res://ui/category_editor.gd
+# res://ui/category_editor.tscn
+# res://ui/item_editor.gd
+# res://ui/item_editor.tscn
+# res://ui/item_row.gd
+# res://ui/item_row.tscn
+# res://ui/planning_screen.gd
+# res://ui/planning_screen.tscn
+# res://ui/tools_screen.gd
+# res://ui/tools_screen.tscn
+#
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Neoshop\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: ui/setup_screen.tscn
+msgid "SETUP_TITLE"
+msgstr "Einstellungen"
+
+#: ui/setup_screen.tscn
+msgid "THEME"
+msgstr "Design"
+
+#: ui/setup_screen.tscn
+msgid "Light"
+msgstr "Hell"
+
+#: ui/setup_screen.tscn
+msgid "Dark"
+msgstr "Dunkel"
+
+#: ui/setup_screen.tscn
+msgid "System"
+msgstr "System"
+
+#: ui/setup_screen.tscn
+msgid "LANGUAGE"
+msgstr "Sprache"
+
+#: ui/setup_screen.tscn
+msgid "English"
+msgstr "English"
+
+#: ui/setup_screen.tscn
+msgid "Deutsch"
+msgstr "Deutsch"
+
+#: ui/setup_screen.tscn
+msgid "APPLY"
+msgstr "OK"
+
+#: ui/setup_screen.tscn
+msgid "CANCEL"
+msgstr "Abbruch"
+
+#: ui/category_editor.gd ui/item_editor.tscn
+msgid "Save"
+msgstr "Speichern"
+
+#: ui/category_editor.gd ui/item_editor.tscn
+msgid "Cancel"
+msgstr "Abbruch"
+
+#: ui/category_editor.gd
+msgid "Category name"
+msgstr "Kategorie Name"
+
+#: ui/category_editor.gd
+msgid "🗑"
+msgstr "🗑"
+
+#: ui/category_editor.tscn
+msgid "Manage Categories"
+msgstr "Kategorien bearbeiten"
+
+#: ui/category_editor.tscn
+msgid "Add Category"
+msgstr "Neue Kategorie"
+
+#: ui/item_editor.gd
+msgid "1"
+msgstr "1"
+
+#: ui/item_editor.gd
+msgid "pcs"
+msgstr "stk"
+
+#: ui/item_editor.gd
+msgid "0"
+msgstr "0"
+
+#: ui/item_editor.tscn
+msgid "Item Editor"
+msgstr "Artikel Editor"
+
+#: ui/item_editor.tscn
+msgid "🗑 Delete"
+msgstr "🗑 löschen"
+
+#: ui/item_editor.tscn
+msgid "Name:"
+msgstr "Name:"
+
+#: ui/item_editor.tscn
+msgid "Name"
+msgstr "Name"
+
+#: ui/item_editor.tscn
+msgid "Amnt:"
+msgstr "Menge:"
+
+#: ui/item_editor.tscn
+msgid "Amount"
+msgstr "Menge"
+
+#: ui/item_editor.tscn
+msgid "Unit"
+msgstr "Einheit"
+
+#: ui/item_editor.tscn
+msgid "Price:"
+msgstr "Preis:"
+
+#: ui/item_editor.tscn
+msgid "Price €"
+msgstr "Preis €"
+
+#: ui/item_editor.tscn
+msgid "Category:"
+msgstr "Kategorie:"
+
+#: ui/item_editor.tscn ui/item_row.tscn
+msgid "category"
+msgstr "Kategorie"
+
+#: ui/item_editor.tscn
+msgid "Description:"
+msgstr "Beschreibung:"
+
+#: ui/item_editor.tscn
+msgid "Description (optional)"
+msgstr "Beschreibung (optional)"
+
+#: ui/item_editor.tscn
+msgid "Need"
+msgstr "Kaufen"
+
+#: ui/item_editor.tscn
+msgid "Cart"
+msgstr "Einkaufswagen"
+
+#: ui/item_row.tscn
+msgid ""
+"1.5\n"
+"\n"
+"litre"
+msgstr ""
+"1.5\n"
+"\n"
+"Liter"
+
+#: ui/item_row.tscn
+msgid "no name"
+msgstr "kein Name"
+
+#: ui/item_row.tscn
+msgid "0.00 €"
+msgstr "0.00 €"
+
+#: ui/item_row.tscn
+msgid "no desc"
+msgstr "keine Beschreibung"
+
+#: ui/planning_screen.gd
+msgid "shopping"
+msgstr "einkaufen"
+
+#: ui/planning_screen.gd
+msgid "planning"
+msgstr "planen"
+
+#: ui/planning_screen.gd
+msgid "All"
+msgstr "Alle"
+
+#: ui/planning_screen.tscn
+msgid "Neoshop"
+msgstr "Neoshop"
+
+#: ui/planning_screen.tscn
+msgid "🔍 search…"
+msgstr "🔍 suchen…"
+
+#: ui/planning_screen.tscn
+msgid "✏️"
+msgstr "✏️"
+
+#: ui/planning_screen.tscn
+msgid "🌱 Seed"
+msgstr "🌱 Seed"
+
+#: ui/tools_screen.tscn
+msgid "←"
+msgstr "←"
+
+#: ui/tools_screen.tscn
+msgid "TOOLS"
+msgstr "Werkzeug"
+
+#: ui/tools_screen.tscn
+msgid "Seed Sample Data"
+msgstr "Beispielsdaten"
+
+#: ui/tools_screen.tscn
+msgid "Export Database"
+msgstr "Datenbank exportieren"
+
+#: ui/tools_screen.tscn
+msgid "Import Database"
+msgstr "Datenbank importieren"
+
+#: ui/tools_screen.tscn
+msgid "Diagnostics"
+msgstr "Diagnose"
+
+#~ msgid "Neoshop – %s (planning)"
+#~ msgstr "Neoshop – %s (planen)"
+
+#~ msgid "Apples"
+#~ msgstr "Äpfel"

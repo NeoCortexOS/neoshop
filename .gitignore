@@ -2,6 +2,9 @@
 .godot/
 /android/
 
+# ignore build directory
+builds/
+
 # Godot-specific ignores
 .import/
 export.cfg
@@ -25,9 +28,8 @@ mono_crash.*.json
 # Jetbrains IDE files
 .idea/
 
-
-# ignore build directory
-builds/
-
 # ignore my temporary notes
 notes.txt
+
+# ignore outdated documents to remove clutter
+history/

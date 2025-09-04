@@ -29,6 +29,8 @@ func _ready():
 	print("Database path: ", _db.path)
 	print("Directory exists: ", DirAccess.dir_exists_absolute(_db.path.get_base_dir()))
 	
+	TranslationServer.set_locale(DB.get_config("language", "en"))
+
 
 func _table_exists(table:String) -> bool:
 	var success = _db.query_with_bindings("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", [table])
@@ -160,3 +162,15 @@ func select_item_count() -> int:
 # Returns a user-friendly DB name (file name without path)
 func get_db_name() -> String:
 	return _db.path.get_file()
+
+func get_config(key: String, default := "") -> String:
+	var ok := _db.query_with_bindings("SELECT value FROM config WHERE key = ?", [key])
+	if ok and _db.query_result.size() > 0:
+		return str(_db.query_result[0]["value"])
+	return default
+
+func set_config(key: String, value: String) -> void:
+	_db.query_with_bindings(
+		"INSERT OR REPLACE INTO config(key, value) VALUES (?, ?)",
+		[key, value]
+	)

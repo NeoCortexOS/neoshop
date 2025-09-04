@@ -36,8 +36,8 @@ func seed_database() -> void:
 	_seed_async(dialog, progress_label, progress_bar)
 
 func _seed_async(dialog: AcceptDialog, label: Label, progress: ProgressBar) -> void:
-	var total_steps = 3
-	var current_step = 0
+	var total_steps: float = 3.0
+	var current_step: float = 0.0
 	
 	# Step 1: Add categories
 	label.text = "Adding categories..."

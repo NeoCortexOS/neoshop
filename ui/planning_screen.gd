@@ -8,6 +8,7 @@ class_name PlanningScreen
 @onready var item_list : VBoxContainer     = $MainVBox/Scroll/ItemList
 @onready var add_btn   : Button            = $MainVBox/BottomBar/AddButton
 @onready var settings  : Button            = $MainVBox/BottomBar/SettingsButton
+@onready var tools  : Button               = $MainVBox/BottomBar/ToolsButton
 @onready var toggle_shopping_mode_btn  : Button = $MainVBox/BottomBar/ToggleShoppingModeButton
 @onready var seed_btn  : Button            = $MainVBox/BottomBar/SeedButton
 @onready var category_editor: ConfirmationDialog = %CategoryEditor
@@ -24,6 +25,7 @@ func _ready() -> void:
 	category.item_selected.connect(func(_t): _refresh())
 	add_btn.pressed.connect(_on_add)
 	settings.pressed.connect(_on_settings)
+	tools.pressed.connect(_on_tools)
 	toggle_shopping_mode_btn.pressed.connect(_on_shopping_toggle)
 	seed_btn.pressed.connect(_on_seed)
 	
@@ -31,8 +33,10 @@ func _ready() -> void:
 	category_editor.category_saved.connect(_on_categories_changed)
 
 func _update_app_title() -> void:
-	var mode = "shopping" if shopping_mode else "planning"
-	%AppTitle.text = "Neoshop – %s (%s)" % [DB.get_db_name(), mode]
+	var mode = tr("shopping") if shopping_mode else tr("planning")
+	var db_name = DB.get_db_name().replace('.db', '')
+	%DBName.text = db_name.replace('.gd', '')
+	%AppMode.text = mode
 
 func _populate_category_filter() -> void:
 	category.clear()
@@ -184,11 +188,18 @@ func _edit_item(id: int) -> void:
 	print("edit_item: ", id)
 	_open_editor(id)
 
+
 func _on_add() -> void:
 	_open_editor(-1)
-	
+
+
 func _on_settings() -> void:
-	get_tree().change_scene_to_file("res://ui/settings.tscn")
+	get_tree().change_scene_to_file("res://ui/setup_screen.tscn")
+
+
+func _on_tools() -> void:
+	get_tree().change_scene_to_file("res://ui/tools_screen.tscn")
+
 
 func _on_shopping_toggle() -> void:
 	shopping_mode = !shopping_mode

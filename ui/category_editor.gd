@@ -38,12 +38,12 @@ func _load_categories():
 	for category in categories:
 		_add_category_row(category["name"], category["id"])
 
-func _add_category_row(name: String = "", category_id: int = -1):
+func _add_category_row(cname: String = "", category_id: int = -1):
 	var hbox = HBoxContainer.new()
 	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
 	var line_edit = LineEdit.new()
-	line_edit.text = name
+	line_edit.text = cname
 	line_edit.placeholder_text = "Category name"
 	line_edit.custom_minimum_size = Vector2(300, 0)
 	line_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -64,7 +64,7 @@ func _add_category_row(name: String = "", category_id: int = -1):
 	})
 	
 	# Focus the new line edit
-	if name == "":
+	if cname == "":
 		line_edit.grab_focus()
 
 func _delete_category_row(container: Node, line_edit: LineEdit):
@@ -107,16 +107,16 @@ func _on_save_button_pressed():
 	var has_empty = false
 	
 	for input_data in _category_inputs:
-		var name = input_data["line_edit"].text.strip_edges()
-		if name == "":
+		var cname = input_data["line_edit"].text.strip_edges()
+		if cname == "":
 			has_empty = true
 			continue
 			
-		if names.has(name.to_lower()):
-			_show_warning_dialog("Duplicate category name: %s" % name)
+		if names.has(cname.to_lower()):
+			_show_warning_dialog("Duplicate category name: %s" % cname)
 			return
 			
-		names[name.to_lower()] = name
+		names[cname.to_lower()] = cname
 	
 	if has_empty:
 		_show_warning_dialog("Please fill in or delete empty category names")
@@ -124,18 +124,18 @@ func _on_save_button_pressed():
 	
 	# Save all categories
 	for input_data in _category_inputs:
-		var name = input_data["line_edit"].text.strip_edges()
-		if name == "":
+		var cname = input_data["line_edit"].text.strip_edges()
+		if cname == "":
 			continue
 			
 		var category_id = int(input_data["line_edit"].get_meta("category_id", -1))
 		
 		if category_id == -1:
 			# New category
-			DB.insert_category(name)
+			DB.insert_category(cname)
 		else:
 			# Update existing
-			DB.update_category(category_id, name)
+			DB.update_category(category_id, cname)
 	
 	# Emit signal
 	category_saved.emit()

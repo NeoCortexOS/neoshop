@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://b6x8o2d0m1y7k"]
+[gd_scene load_steps=8 format=3 uid="uid://b6x8o2d0m1y7k"]
 
 [ext_resource type="Theme" uid="uid://ybvjkasxa0h8" path="res://themes/material.tres" id="1_5w1wj"]
 [ext_resource type="Script" uid="uid://udgg8w6seh5f" path="res://ui/planning_screen.gd" id="2_f6ibo"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://b53vjde25n6go" path="res://icons/bright_plus_inkscape.svg" id="3_f6ibo"]
 [ext_resource type="Texture2D" uid="uid://dqt58lxre8w5q" path="res://icons/emoji_u2699.svg" id="4_2w63m"]
 [ext_resource type="Texture2D" uid="uid://cgxxpdiymb2xd" path="res://icons/cart.svg" id="5_pgv0f"]
+[ext_resource type="Texture2D" uid="uid://c4itwcer5slks" path="res://icons/emoji_u1f6e0.svg" id="5_ylpv7"]
 
 [node name="PlanningScreen" type="Control"]
 layout_mode = 3
@@ -34,10 +35,19 @@ size_flags_vertical = 0
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Neoshop – %s (planning)"
+text = "Neoshop"
 
 [node name="DBName" type="Label" parent="MainVBox/TopBar"]
+unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 1
+
+[node name="AppMode" type="Label" parent="MainVBox/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 2
 
 [node name="FilterBar" type="HBoxContainer" parent="MainVBox"]
 custom_minimum_size = Vector2(0, 80)
@@ -78,23 +88,33 @@ theme = ExtResource("1_5w1wj")
 alignment = 1
 
 [node name="AddButton" type="Button" parent="MainVBox/BottomBar"]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 icon = ExtResource("3_f6ibo")
 
 [node name="SettingsButton" type="Button" parent="MainVBox/BottomBar"]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 icon = ExtResource("4_2w63m")
 
+[node name="ToolsButton" type="Button" parent="MainVBox/BottomBar"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+icon = ExtResource("5_ylpv7")
+
+[node name="spacer" type="Control" parent="MainVBox/BottomBar"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+
 [node name="ToggleShoppingModeButton" type="Button" parent="MainVBox/BottomBar"]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 icon = ExtResource("5_pgv0f")
 
 [node name="SeedButton" type="Button" parent="MainVBox/BottomBar"]
-custom_minimum_size = Vector2(100, 0)
+visible = false
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "🌱 Seed"
 

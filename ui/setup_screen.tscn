@@ -1,0 +1,86 @@
+[gd_scene load_steps=3 format=3 uid="uid://bd54hhfftxc1c"]
+
+[ext_resource type="Script" uid="uid://cat6ur4a1rvmw" path="res://ui/setup_screen.gd" id="1"]
+[ext_resource type="Theme" uid="uid://ybvjkasxa0h8" path="res://themes/material.tres" id="2"]
+
+[node name="SetupScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+script = ExtResource("1")
+
+[node name="MainVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Header" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="MainVBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "SETUP_TITLE"
+
+[node name="ThemeSection" type="VBoxContainer" parent="MainVBox"]
+layout_mode = 2
+
+[node name="ThemeLabel" type="Label" parent="MainVBox/ThemeSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "THEME"
+
+[node name="ThemeOption" type="OptionButton" parent="MainVBox/ThemeSection"]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 3
+popup/item_0/text = "Light"
+popup/item_0/id = 0
+popup/item_1/text = "Dark"
+popup/item_1/id = 1
+popup/item_2/text = "System"
+popup/item_2/id = 2
+
+[node name="LanguageSection" type="VBoxContainer" parent="MainVBox"]
+layout_mode = 2
+
+[node name="LanguageLabel" type="Label" parent="MainVBox/LanguageSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "LANGUAGE"
+
+[node name="LanguageOption" type="OptionButton" parent="MainVBox/LanguageSection"]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "English"
+popup/item_0/id = 0
+popup/item_1/text = "Deutsch"
+popup/item_1/id = 1
+
+[node name="ActionBar" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="ApplyButton" type="Button" parent="MainVBox/ActionBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "APPLY"
+
+[node name="CancelButton" type="Button" parent="MainVBox/ActionBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "CANCEL"

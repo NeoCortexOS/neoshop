@@ -1,0 +1,65 @@
+[gd_scene load_steps=3 format=3 uid="uid://toolsscreen"]
+
+[ext_resource type="Script" uid="uid://x73g8a1wu7xi" path="res://ui/tools_screen.gd" id="1"]
+[ext_resource type="Theme" uid="uid://ybvjkasxa0h8" path="res://themes/material.tres" id="2"]
+
+[node name="ToolsScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+script = ExtResource("1")
+
+[node name="MainVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Header" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="BackButton" type="Button" parent="MainVBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "←"
+
+[node name="TitleLabel" type="Label" parent="MainVBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "TOOLS"
+
+[node name="ToolsList" type="VBoxContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SeedButton" type="Button" parent="MainVBox/ToolsList"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Seed Sample Data"
+
+[node name="ExportButton" type="Button" parent="MainVBox/ToolsList"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Export Database"
+
+[node name="ImportButton" type="Button" parent="MainVBox/ToolsList"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Import Database"
+
+[node name="DiagnosticsButton" type="Button" parent="MainVBox/ToolsList"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Diagnostics"

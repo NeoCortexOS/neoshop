@@ -1,0 +1,238 @@
+# LANGUAGE translation for Neoshop for the following files:
+# res://ui/setup_screen.gd
+# res://ui/setup_screen.tscn
+# res://ui/category_editor.gd
+# res://ui/category_editor.tscn
+# res://ui/item_editor.gd
+# res://ui/item_editor.tscn
+# res://ui/item_row.gd
+# res://ui/item_row.tscn
+# res://ui/planning_screen.gd
+# res://ui/planning_screen.tscn
+# res://ui/tools_screen.gd
+# res://ui/tools_screen.tscn
+#
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Neoshop\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: ui/setup_screen.tscn
+msgid "SETUP_TITLE"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "THEME"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "Light"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "Dark"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "System"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "LANGUAGE"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "English"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "Deutsch"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "APPLY"
+msgstr ""
+
+#: ui/setup_screen.tscn
+msgid "CANCEL"
+msgstr ""
+
+#: ui/category_editor.gd
+#: ui/item_editor.tscn
+msgid "Save"
+msgstr ""
+
+#: ui/category_editor.gd
+#: ui/item_editor.tscn
+msgid "Cancel"
+msgstr ""
+
+#: ui/category_editor.gd
+msgid "Category name"
+msgstr ""
+
+#: ui/category_editor.gd
+msgid "🗑"
+msgstr ""
+
+#: ui/category_editor.tscn
+msgid "Manage Categories"
+msgstr ""
+
+#: ui/category_editor.tscn
+msgid "Add Category"
+msgstr ""
+
+#: ui/item_editor.gd
+#: ui/planning_screen.gd
+msgid ""
+msgstr ""
+
+#: ui/item_editor.gd
+msgid "1"
+msgstr ""
+
+#: ui/item_editor.gd
+msgid "pcs"
+msgstr ""
+
+#: ui/item_editor.gd
+msgid "0"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Item Editor"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "🗑 Delete"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Name:"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Name"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Amnt:"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Amount"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Unit"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Price:"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Price €"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Category:"
+msgstr ""
+
+#: ui/item_editor.tscn
+#: ui/item_row.tscn
+msgid "category"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Description:"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Description (optional)"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Need"
+msgstr ""
+
+#: ui/item_editor.tscn
+msgid "Cart"
+msgstr ""
+
+#: ui/item_row.tscn
+msgid ""
+"1.5\n"
+"\n"
+"litre"
+msgstr ""
+
+#: ui/item_row.tscn
+msgid "no name"
+msgstr ""
+
+#: ui/item_row.tscn
+msgid "0.00 €"
+msgstr ""
+
+#: ui/item_row.tscn
+msgid "no desc"
+msgstr ""
+
+#: ui/planning_screen.gd
+msgid "shopping"
+msgstr ""
+
+#: ui/planning_screen.gd
+msgid "planning"
+msgstr ""
+
+#: ui/planning_screen.gd
+msgid "All"
+msgstr ""
+
+#: ui/planning_screen.tscn
+msgid "Neoshop"
+msgstr ""
+
+#: ui/planning_screen.tscn
+msgid "🔍 search…"
+msgstr ""
+
+#: ui/planning_screen.tscn
+msgid "✏️"
+msgstr ""
+
+#: ui/planning_screen.tscn
+msgid "🌱 Seed"
+msgstr ""
+
+#: ui/tools_screen.tscn
+msgid "←"
+msgstr ""
+
+#: ui/tools_screen.tscn
+msgid "TOOLS"
+msgstr ""
+
+#: ui/tools_screen.tscn
+msgid "Seed Sample Data"
+msgstr ""
+
+#: ui/tools_screen.tscn
+msgid "Export Database"
+msgstr ""
+
+#: ui/tools_screen.tscn
+msgid "Import Database"
+msgstr ""
+
+#: ui/tools_screen.tscn
+msgid "Diagnostics"
+msgstr ""
