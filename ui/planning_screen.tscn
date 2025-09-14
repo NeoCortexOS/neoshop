@@ -1,12 +1,12 @@
 [gd_scene load_steps=8 format=3 uid="uid://b6x8o2d0m1y7k"]
 
-[ext_resource type="Theme" uid="uid://ybvjkasxa0h8" path="res://themes/material.tres" id="1_5w1wj"]
 [ext_resource type="Script" uid="uid://udgg8w6seh5f" path="res://ui/planning_screen.gd" id="2_f6ibo"]
+[ext_resource type="Texture2D" uid="uid://cditrvsf0iu8u" path="res://icons/blue_pencil.svg" id="2_ylpv7"]
 [ext_resource type="PackedScene" uid="uid://b0r41dxaybeu8" path="res://ui/category_editor.tscn" id="3_467qh"]
-[ext_resource type="Texture2D" uid="uid://b53vjde25n6go" path="res://icons/bright_plus_inkscape.svg" id="3_f6ibo"]
-[ext_resource type="Texture2D" uid="uid://dqt58lxre8w5q" path="res://icons/emoji_u2699.svg" id="4_2w63m"]
+[ext_resource type="Texture2D" uid="uid://b34exhdl0qy0" path="res://icons/blue_plus.svg" id="3_pgv0f"]
+[ext_resource type="Texture2D" uid="uid://dqt58lxre8w5q" path="res://icons/settings.svg" id="4_2w63m"]
 [ext_resource type="Texture2D" uid="uid://cgxxpdiymb2xd" path="res://icons/cart.svg" id="5_pgv0f"]
-[ext_resource type="Texture2D" uid="uid://c4itwcer5slks" path="res://icons/emoji_u1f6e0.svg" id="5_ylpv7"]
+[ext_resource type="Texture2D" uid="uid://c4itwcer5slks" path="res://icons/tools.svg" id="5_ylpv7"]
 
 [node name="PlanningScreen" type="Control"]
 layout_mode = 3
@@ -15,109 +15,120 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_5w1wj")
 script = ExtResource("2_f6ibo")
 
-[node name="MainVBox" type="VBoxContainer" parent="."]
+[node name="BackgroundPanel" type="MarginContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Panel" type="Panel" parent="BackgroundPanel"]
+layout_mode = 2
+
+[node name="MainVBox" type="VBoxContainer" parent="BackgroundPanel"]
+layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="TopBar" type="HBoxContainer" parent="MainVBox"]
+[node name="TopBar" type="HBoxContainer" parent="BackgroundPanel/MainVBox"]
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="AppTitle" type="Label" parent="MainVBox/TopBar"]
+[node name="AppTitle" type="Label" parent="BackgroundPanel/MainVBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Neoshop"
 
-[node name="DBName" type="Label" parent="MainVBox/TopBar"]
+[node name="DBName" type="Label" parent="BackgroundPanel/MainVBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 horizontal_alignment = 1
 
-[node name="AppMode" type="Label" parent="MainVBox/TopBar"]
+[node name="AppMode" type="Label" parent="BackgroundPanel/MainVBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 horizontal_alignment = 2
 
-[node name="FilterBar" type="HBoxContainer" parent="MainVBox"]
+[node name="FilterBar" type="HBoxContainer" parent="BackgroundPanel/MainVBox"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="Search" type="LineEdit" parent="MainVBox/FilterBar"]
+[node name="Search" type="LineEdit" parent="BackgroundPanel/MainVBox/FilterBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "🔍 search…"
 
-[node name="CategoryEditButton" type="Button" parent="MainVBox/FilterBar"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "✏️"
-
-[node name="CategoryFilter" type="OptionButton" parent="MainVBox/FilterBar"]
+[node name="CategoryFilter" type="OptionButton" parent="BackgroundPanel/MainVBox/FilterBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Scroll" type="ScrollContainer" parent="MainVBox"]
+[node name="CategoryEditButton" type="Button" parent="BackgroundPanel/MainVBox/FilterBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+icon = ExtResource("2_ylpv7")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Scroll" type="ScrollContainer" parent="BackgroundPanel/MainVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
+follow_focus = true
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 2
 
-[node name="ItemList" type="VBoxContainer" parent="MainVBox/Scroll"]
+[node name="ItemList" type="VBoxContainer" parent="BackgroundPanel/MainVBox/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="BottomBar" type="HBoxContainer" parent="MainVBox"]
+[node name="BottomBar" type="HBoxContainer" parent="BackgroundPanel/MainVBox"]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_vertical = 8
-theme = ExtResource("1_5w1wj")
 alignment = 1
 
-[node name="AddButton" type="Button" parent="MainVBox/BottomBar"]
-custom_minimum_size = Vector2(80, 0)
+[node name="AddButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
-icon = ExtResource("3_f6ibo")
+icon = ExtResource("3_pgv0f")
+icon_alignment = 1
 
-[node name="SettingsButton" type="Button" parent="MainVBox/BottomBar"]
+[node name="spacer" type="Control" parent="BackgroundPanel/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+
+[node name="SettingsButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 icon = ExtResource("4_2w63m")
 
-[node name="ToolsButton" type="Button" parent="MainVBox/BottomBar"]
+[node name="ToolsButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 icon = ExtResource("5_ylpv7")
 
-[node name="spacer" type="Control" parent="MainVBox/BottomBar"]
+[node name="spacer2" type="Control" parent="BackgroundPanel/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 
-[node name="ToggleShoppingModeButton" type="Button" parent="MainVBox/BottomBar"]
+[node name="ToggleShoppingModeButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 icon = ExtResource("5_pgv0f")
 
-[node name="SeedButton" type="Button" parent="MainVBox/BottomBar"]
-visible = false
-custom_minimum_size = Vector2(80, 0)
-layout_mode = 2
-text = "🌱 Seed"
-
-[node name="CategoryEditor" parent="." instance=ExtResource("3_467qh")]
+[node name="CategoryEditor" parent="BackgroundPanel" instance=ExtResource("3_467qh")]
 unique_name_in_owner = true
 position = Vector2i(0, 36)

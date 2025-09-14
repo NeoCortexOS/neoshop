@@ -1,23 +1,24 @@
 extends Control
 class_name PlanningScreen
 
-@onready var top_bar   : HBoxContainer     = $MainVBox/TopBar
-@onready var db_label  : Label             = $MainVBox/TopBar/DBName
-@onready var search    : LineEdit          = $MainVBox/FilterBar/Search
-@onready var category  : OptionButton      = $MainVBox/FilterBar/CategoryFilter
-@onready var item_list : VBoxContainer     = $MainVBox/Scroll/ItemList
-@onready var add_btn   : Button            = $MainVBox/BottomBar/AddButton
-@onready var settings  : Button            = $MainVBox/BottomBar/SettingsButton
-@onready var tools  : Button               = $MainVBox/BottomBar/ToolsButton
-@onready var toggle_shopping_mode_btn  : Button = $MainVBox/BottomBar/ToggleShoppingModeButton
-@onready var seed_btn  : Button            = $MainVBox/BottomBar/SeedButton
+@onready var top_bar   : HBoxContainer     = $BackgroundPanel/MainVBox/TopBar
+@onready var db_label  : Label             = $BackgroundPanel/MainVBox/TopBar/DBName
+@onready var search    : LineEdit          = $BackgroundPanel/MainVBox/FilterBar/Search
+@onready var category  : OptionButton      = $BackgroundPanel/MainVBox/FilterBar/CategoryFilter
+@onready var item_list : VBoxContainer     = $BackgroundPanel/MainVBox/Scroll/ItemList
+@onready var add_btn   : Button            = $BackgroundPanel/MainVBox/BottomBar/AddButton
+@onready var settings  : Button            = $BackgroundPanel/MainVBox/BottomBar/SettingsButton
+@onready var tools     : Button            = $BackgroundPanel/MainVBox/BottomBar/ToolsButton
+@onready var toggle_shopping_mode_btn  : Button = $BackgroundPanel/MainVBox/BottomBar/ToggleShoppingModeButton
 @onready var category_editor: ConfirmationDialog = %CategoryEditor
 
 var rows : Dictionary = {}   # int -> ItemRow
 var shopping_mode : bool = false
 
+
 func _ready() -> void:
-	db_label.text = ""
+	db_label.text = "loading"
+	_load_initial_settings()
 	_update_app_title()
 	_populate_category_filter()
 	_refresh()
@@ -27,16 +28,17 @@ func _ready() -> void:
 	settings.pressed.connect(_on_settings)
 	tools.pressed.connect(_on_tools)
 	toggle_shopping_mode_btn.pressed.connect(_on_shopping_toggle)
-	seed_btn.pressed.connect(_on_seed)
 	
 	%CategoryEditButton.pressed.connect(_on_category_edit_pressed)
 	category_editor.category_saved.connect(_on_categories_changed)
 
+
 func _update_app_title() -> void:
-	var mode = tr("shopping") if shopping_mode else tr("planning")
+	var mode = tr("shopping") if DB.shopping_mode else tr("planning")
 	var db_name = DB.get_db_name().replace('.db', '')
 	%DBName.text = db_name.replace('.gd', '')
 	%AppMode.text = mode
+
 
 func _populate_category_filter() -> void:
 	category.clear()
@@ -44,7 +46,16 @@ func _populate_category_filter() -> void:
 	for cat in DB.select_categories():
 		category.add_item(str(cat["name"]), int(cat["id"]))
 	category.selected = 0
-	
+
+
+func _load_initial_settings() -> void:
+	var myTheme: String = DB.get_config("theme", "light")
+	var lang:  String = DB.get_config("language",  "en")
+	ThemeManager.apply_theme(myTheme)
+	LocaleHelper.set_locale(lang)
+	#print("_load_initial_settings, theme: ", myTheme, " lang: ", lang)
+
+
 func _on_seed() -> void:
 	var confirm = ConfirmationDialog.new()
 	confirm.title = "Reset Database?"
@@ -60,14 +71,15 @@ func _on_seed() -> void:
 		seed_manager.seed_database()
 	)
 	
-	confirm.canceled.connect(func():
-		print("Seeding cancelled")
-	)
+	#confirm.canceled.connect(func():
+		#print("Seeding cancelled")
+	#)
 		
 	get_tree().root.add_child(confirm)
 	confirm.popup_centered()
 	_refresh()
-		
+
+
 func _refresh_category_filter():
 	# Clear existing items except "All"
 	category.clear()
@@ -83,7 +95,8 @@ func _refresh_category_filter():
 	
 	# Reset selection to "All"
 	category.selected = 0
-	
+
+
 func _refresh() -> void:
 	var search_txt : String = search.text.to_lower()
 	var cat_id     : int    = category.get_item_id(category.selected)
@@ -98,7 +111,7 @@ func _refresh() -> void:
 	rows.clear()
 	
 	# Filter based on mode
-	if shopping_mode:
+	if DB.shopping_mode:
 		# Shopping mode: only needed items
 		items = items.filter(func(it: Dictionary) -> bool:
 			var matches_needed = bool(it.get("needed", false))
@@ -145,7 +158,7 @@ func _refresh() -> void:
 		var id : int = int(it["id"])
 		var row : ItemRow = preload("res://ui/item_row.tscn").instantiate() as ItemRow
 		row.setup(it)
-		row.set_shopping_mode(shopping_mode)
+		#row.set_shopping_mode(DB.shopping_mode)
 		row.long_pressed.connect(_edit_item)
 		row.needed_changed.connect(DB.toggle_needed)
 		row.in_cart_changed.connect(_on_in_cart_changed)
@@ -153,9 +166,9 @@ func _refresh() -> void:
 		rows[id] = row
 	
 	# Update UI for shopping mode - only hide add button
-	#add_btn.visible = !shopping_mode
+	#add_btn.visible = !DB.shopping_mode
 
-	print("_refresh items: ", items_count, " shopping_mode = ", shopping_mode)
+	print("_refresh items: ", items_count, " shopping_mode = ", DB.shopping_mode)
 
 
 func _open_editor(id: int) -> void:
@@ -184,6 +197,7 @@ func _open_editor(id: int) -> void:
 		popup.new_item()
 	popup.show()
 
+
 func _edit_item(id: int) -> void:
 	print("edit_item: ", id)
 	_open_editor(id)
@@ -202,30 +216,33 @@ func _on_tools() -> void:
 
 
 func _on_shopping_toggle() -> void:
-	shopping_mode = !shopping_mode
-	#toggle_shopping_mode_btn.text = "📋" if shopping_mode else "🛒"
+	DB.shopping_mode = !DB.shopping_mode
+	#toggle_shopping_mode_btn.text = "📋" if DB.shopping_mode else "🛒"
 	# Preload the icons (use preload for performance, or load() if paths are dynamic)
-	var notepad_icon = preload("res://icons/emoji_u1f5d2.svg")
+	var notepad_icon = preload("res://icons/notepad.svg")
 	#var cart_icon = preload("res://icons/cart.png")
 	var cart_icon = preload("res://icons/cart.svg")
 
 	# Set the button's icon based on the condition
-	toggle_shopping_mode_btn.icon = notepad_icon if shopping_mode else cart_icon
-	#toggle_shopping_mode_btn.icon = res://icons/cross.png if shopping_mode else res://icons/cart.png
+	toggle_shopping_mode_btn.icon = notepad_icon if DB.shopping_mode else cart_icon
 	_update_app_title()
 	_refresh()
+
 
 func _on_in_cart_changed(item_id: int) -> void:
 	DB.toggle_in_cart(item_id)
 	_refresh()
 	print("in_cart_changed")
 
+
 func _on_category_edit_pressed():
 	category_editor.popup_category_editor()
+
 
 func _on_categories_changed():
 	_refresh_category_filter()
 	_refresh()
+
 
 # ------------------------------------------------------------------
 func _get_editor() -> Window:
@@ -235,3 +252,15 @@ func _get_editor() -> Window:
 		var dlg := AcceptDialog.new()
 		dlg.dialog_text = "Editor scene missing – stub only"
 		return dlg
+
+
+func _input(event) -> void:
+	#if event is InputEventKey and event.pressed:
+		#print(OS.get_keycode_string(event.keycode))
+	if event is InputEventKey and event.keycode in [KEY_BACK, KEY_ESCAPE] and event.pressed:
+		if(DB.shopping_mode):
+			_on_shopping_toggle()
+			return
+		print("Application Quit")
+		get_tree().quit()
+		

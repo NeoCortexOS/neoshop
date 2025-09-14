@@ -4,6 +4,7 @@ extends Node
 var _db: SQLite
 var db_path := "user://neoshop.db"
 #var _migration: Migration
+var shopping_mode : bool = false
 
 
 func _ready():

@@ -39,7 +39,7 @@ msgid "Dark"
 msgstr ""
 
 #: ui/setup_screen.tscn
-msgid "System"
+msgid "Classic"
 msgstr ""
 
 #: ui/setup_screen.tscn
@@ -89,7 +89,6 @@ msgid "Add Category"
 msgstr ""
 
 #: ui/item_editor.gd
-#: ui/planning_screen.gd
 msgid ""
 msgstr ""
 
@@ -110,7 +109,7 @@ msgid "Item Editor"
 msgstr ""
 
 #: ui/item_editor.tscn
-msgid "🗑 Delete"
+msgid "DELETE"
 msgstr ""
 
 #: ui/item_editor.tscn
@@ -174,7 +173,7 @@ msgid ""
 msgstr ""
 
 #: ui/item_row.tscn
-msgid "no name"
+msgid "ITEMNAME"
 msgstr ""
 
 #: ui/item_row.tscn
@@ -183,6 +182,10 @@ msgstr ""
 
 #: ui/item_row.tscn
 msgid "no desc"
+msgstr ""
+
+#: ui/planning_screen.gd
+msgid "loading"
 msgstr ""
 
 #: ui/planning_screen.gd
@@ -205,18 +208,6 @@ msgstr ""
 msgid "🔍 search…"
 msgstr ""
 
-#: ui/planning_screen.tscn
-msgid "✏️"
-msgstr ""
-
-#: ui/planning_screen.tscn
-msgid "🌱 Seed"
-msgstr ""
-
-#: ui/tools_screen.tscn
-msgid "←"
-msgstr ""
-
 #: ui/tools_screen.tscn
 msgid "TOOLS"
 msgstr ""
@@ -235,4 +226,8 @@ msgstr ""
 
 #: ui/tools_screen.tscn
 msgid "Diagnostics"
+msgstr ""
+
+#: ui/tools_screen.tscn
+msgid "BACK"
 msgstr ""

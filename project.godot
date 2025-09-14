@@ -12,8 +12,10 @@ config_version=5
 
 config/name="Neoshop"
 run/main_scene="uid://b6x8o2d0m1y7k"
+config/quit_on_go_back=false
 config/features=PackedStringArray("4.4", "GL Compatibility")
-config/icon="res://icon.svg"
+run/max_fps=60
+config/icon="uid://3ab4jprjc2d3"
 
 [autoload]
 
@@ -26,6 +28,7 @@ LocaleHelper="*res://scripts/locale_helper.gd"
 
 window/size/viewport_width=720
 window/size/viewport_height=1280
+window/size/initial_position_type=3
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=6
@@ -44,6 +47,11 @@ pointing/emulate_touch_from_mouse=true
 
 locale/translations=PackedStringArray("res://assets/i18n/de.po", "res://assets/i18n/en_US.po")
 locale/translations_pot_files=PackedStringArray("res://ui/setup_screen.gd", "res://ui/setup_screen.tscn", "res://ui/category_editor.gd", "res://ui/category_editor.tscn", "res://ui/item_editor.gd", "res://ui/item_editor.tscn", "res://ui/item_row.gd", "res://ui/item_row.tscn", "res://ui/planning_screen.gd", "res://ui/planning_screen.tscn", "res://ui/tools_screen.gd", "res://ui/tools_screen.tscn")
+
+[navigation]
+
+baking/thread_model/baking_use_multiple_threads=false
+baking/thread_model/baking_use_high_priority_threads=false
 
 [rendering]
 

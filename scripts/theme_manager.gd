@@ -3,6 +3,7 @@ class_name ThemeMgr
 
 const LIGHT := preload("res://themes/material_light.tres")
 const DARK  := preload("res://themes/material_dark.tres")
+const CLASSIC  := preload("res://themes/material_classic.tres")
 
 func apply_theme(tname: String) -> void:
 	match tname:
@@ -10,13 +11,10 @@ func apply_theme(tname: String) -> void:
 			get_tree().root.theme = LIGHT
 		"dark":
 			get_tree().root.theme = DARK
-		"system":
-			_apply_system_theme()
+		"classic":
+			get_tree().root.theme = CLASSIC
 	_save_config(tname)
-
-func _apply_system_theme() -> void:
-	# simple fallback; extend with OS detection later
-	get_tree().root.theme = LIGHT
+	print("Theme applied: ", tname)
 
 func _save_config(tname: String) -> void:
 	DB._db.query_with_bindings(

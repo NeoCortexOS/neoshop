@@ -43,3 +43,8 @@ func _on_import_file(path: String) -> void:
 func _on_diagnostics() -> void:
 	var ok = DB._db.query("PRAGMA integrity_check")
 	OS.alert("Integrity: %s" % DB._db.query_result[0].integrity_check)
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.keycode in [KEY_BACK, KEY_ESCAPE] and event.pressed:
+		_on_back()

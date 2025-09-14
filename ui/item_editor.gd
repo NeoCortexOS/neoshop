@@ -26,7 +26,7 @@ func _ready() -> void:
 func new_item() -> void:
 	_item_id = -1
 	_clear_fields()
-	popup_centered()
+	popup_centered_ratio(1.0)
 
 func edit_item(id: int) -> void:
 	_item_id = id
@@ -37,7 +37,7 @@ func edit_item(id: int) -> void:
 	var it : Dictionary = items[0]
 	_populate_fields(it)
 	%DeleteBtn.visible = true          # only show when editing
-	popup_centered()
+	popup_centered_ratio(1.0)
 
 # --------------------------------------------------
 # Internals
@@ -122,3 +122,7 @@ func _on_delete() -> void:
 func _on_cancel() -> void:
 	emit_signal("item_canceled")
 	queue_free()
+	
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.keycode in [KEY_BACK, KEY_ESCAPE] and event.pressed:
+		_on_cancel()

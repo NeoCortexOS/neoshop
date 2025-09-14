@@ -45,8 +45,8 @@ msgid "Dark"
 msgstr "Dunkel"
 
 #: ui/setup_screen.tscn
-msgid "System"
-msgstr "System"
+msgid "Classic"
+msgstr "Classic"
 
 #: ui/setup_screen.tscn
 msgid "LANGUAGE"
@@ -54,7 +54,7 @@ msgstr "Sprache"
 
 #: ui/setup_screen.tscn
 msgid "English"
-msgstr "English"
+msgstr "Englisch"
 
 #: ui/setup_screen.tscn
 msgid "Deutsch"
@@ -109,8 +109,8 @@ msgid "Item Editor"
 msgstr "Artikel Editor"
 
 #: ui/item_editor.tscn
-msgid "🗑 Delete"
-msgstr "🗑 löschen"
+msgid "DELETE"
+msgstr "Löschen"
 
 #: ui/item_editor.tscn
 msgid "Name:"
@@ -162,7 +162,7 @@ msgstr "Kaufen"
 
 #: ui/item_editor.tscn
 msgid "Cart"
-msgstr "Einkaufswagen"
+msgstr "Wagen"
 
 #: ui/item_row.tscn
 msgid ""
@@ -175,8 +175,8 @@ msgstr ""
 "Liter"
 
 #: ui/item_row.tscn
-msgid "no name"
-msgstr "kein Name"
+msgid "ITEMNAME"
+msgstr "Artikelname"
 
 #: ui/item_row.tscn
 msgid "0.00 €"
@@ -185,6 +185,10 @@ msgstr "0.00 €"
 #: ui/item_row.tscn
 msgid "no desc"
 msgstr "keine Beschreibung"
+
+#: ui/planning_screen.gd
+msgid "loading"
+msgstr "lade"
 
 #: ui/planning_screen.gd
 msgid "shopping"
@@ -206,21 +210,9 @@ msgstr "Neoshop"
 msgid "🔍 search…"
 msgstr "🔍 suchen…"
 
-#: ui/planning_screen.tscn
-msgid "✏️"
-msgstr "✏️"
-
-#: ui/planning_screen.tscn
-msgid "🌱 Seed"
-msgstr "🌱 Seed"
-
-#: ui/tools_screen.tscn
-msgid "←"
-msgstr "←"
-
 #: ui/tools_screen.tscn
 msgid "TOOLS"
-msgstr "Werkzeug"
+msgstr "Werkzeuge"
 
 #: ui/tools_screen.tscn
 msgid "Seed Sample Data"
@@ -237,6 +229,28 @@ msgstr "Datenbank importieren"
 #: ui/tools_screen.tscn
 msgid "Diagnostics"
 msgstr "Diagnose"
+
+#: ui/tools_screen.tscn
+msgid "BACK"
+msgstr "zurück"
+
+#~ msgid "🗑 Delete"
+#~ msgstr "🗑 löschen"
+
+#~ msgid "🌱 Seed"
+#~ msgstr "🌱 Beispielsdaten"
+
+#~ msgid "System"
+#~ msgstr "System"
+
+#~ msgid "no name"
+#~ msgstr "kein Name"
+
+#~ msgid "✏️"
+#~ msgstr "✏️"
+
+#~ msgid "←"
+#~ msgstr "←"
 
 #~ msgid "Neoshop – %s (planning)"
 #~ msgstr "Neoshop – %s (planen)"

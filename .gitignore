@@ -31,5 +31,3 @@ mono_crash.*.json
 # ignore my temporary notes
 notes.txt
 
-# ignore outdated documents to remove clutter
-history/

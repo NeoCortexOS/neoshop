@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 25.2.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 128 128"
+   style="enable-background:new 0 0 128 128;"
+   xml:space="preserve"
+   sodipodi:docname="blue_check.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs8630"><linearGradient
+     id="linearGradient10566"
+     inkscape:swatch="solid"><stop
+       style="stop-color:#b8e4ea;stop-opacity:1;"
+       offset="0"
+       id="stop10564" /></linearGradient></defs><sodipodi:namedview
+   id="namedview8628"
+   pagecolor="#ffffff"
+   bordercolor="#000000"
+   borderopacity="0.25"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   showgrid="false"
+   inkscape:zoom="6.46875"
+   inkscape:cx="64.077295"
+   inkscape:cy="64"
+   inkscape:window-width="1920"
+   inkscape:window-height="1016"
+   inkscape:window-x="0"
+   inkscape:window-y="32"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Layer_1" />
+<path
+   style="fill:#82aec0;fill-opacity:1"
+   d="M36.02,123.97c-0.7-0.02-1.41-0.08-2.1-0.2c-4.33-0.77-7.89-3.84-9.3-8l-20-60  c-2.1-6.3,1.3-13.1,7.6-15.2c6.3-2.1,13.1,1.3,15.2,7.6l13,39l62.2-78.6c4.11-5.22,11.68-6.11,16.9-2s6.11,11.68,2,16.9l-76,96  C43.18,122.31,39.7,123.96,36.02,123.97z"
+   id="path8619" />
+<path
+   style="opacity:0.68013719;fill:#b8e4ea;fill-opacity:1"
+   d="M75.17,58.91c1.49-1.24,29.97-35.22,29.97-35.22s2.38-2.53,0.36-4.75  c-1.9-2.03-4.38-0.7-5.57,0.62S73.04,51.18,71.98,52.68c-1.04,1.69-1.07,3.81-0.09,5.53C72.83,59.73,74.14,59.81,75.17,58.91z"
+   id="path8621" />
+<circle
+   style="opacity:0.84705712;fill:#b8e4ea;fill-opacity:1"
+   cx="108.45"
+   cy="12.83"
+   r="3.3"
+   id="circle8623" />
+<path
+   style="opacity:0.856115;fill:#b8e4ea;fill-opacity:1"
+   d="M12.73,65.49c0.67-0.01,0.53-3.76,2.28-7.35c1.23-2.54,2.82-3.82,2.81-5.24  s-1.92-8.34-3.35-7.88c-1.99,0.63-4.53,3.19-5.1,7.18C8.48,58.48,11.5,65.51,12.73,65.49z"
+   id="path8625" />
+</svg>

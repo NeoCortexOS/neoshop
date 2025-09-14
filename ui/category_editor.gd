@@ -11,8 +11,8 @@ var _category_inputs: Array = []
 
 func _ready():
 	# Configure the dialog buttons
-	get_ok_button().text = "Save"
-	get_cancel_button().text = "Cancel"
+	get_ok_button().text = tr("Save")
+	get_cancel_button().text = tr("Cancel")
 	
 	# Connect signals
 	confirmed.connect(_on_save_button_pressed)
@@ -43,6 +43,7 @@ func _add_category_row(cname: String = "", category_id: int = -1):
 	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
 	var line_edit = LineEdit.new()
+	line_edit.focus_mode = Control.FOCUS_ALL
 	line_edit.text = cname
 	line_edit.placeholder_text = "Category name"
 	line_edit.custom_minimum_size = Vector2(300, 0)
@@ -66,6 +67,9 @@ func _add_category_row(cname: String = "", category_id: int = -1):
 	# Focus the new line edit
 	if cname == "":
 		line_edit.grab_focus()
+		await get_tree().process_frame
+		%ScrollContainer.ensure_control_visible(line_edit)
+		print("net category added, trying to focus")
 
 func _delete_category_row(container: Node, line_edit: LineEdit):
 	var category_id = int(line_edit.get_meta("category_id", -1))
@@ -75,6 +79,8 @@ func _delete_category_row(container: Node, line_edit: LineEdit):
 	if items.size() > 0:
 		_show_warning_dialog("Cannot delete category with items. Move items to another category first.")
 		return
+	
+	_show_warning_dialog("DELETE_CATEGORY")
 	
 	# Remove from UI
 	categories_container.remove_child(container)
@@ -142,3 +148,8 @@ func _on_save_button_pressed():
 
 func _on_cancel_button_pressed():
 	category_cancelled.emit()
+	
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.keycode in [KEY_BACK, KEY_ESCAPE] and event.pressed:
+		category_cancelled.emit()
+		hide()

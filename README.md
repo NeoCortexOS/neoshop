@@ -1,90 +1,92 @@
-# 🎉 Neoshop – Planning Mode **COMPLETE** ✅
+# Neoshop – Offline-first shopping list
 
-Offline-first shopping list for family & friends.  
-Built with **Godot 4.4.1 + GDScript + SQLite GDExtension 4.5**.
-
----
-
-## ✨ **What's New in This Release**
-
-### 🔄 **Database Magic**
-- **Sequential migration system** (v0 → v1 → v2)
-- **Android persistence** solved (no permissions needed)
-- **Schema evolution** with proper version tracking
-
-### 🛠️ **Core Features**
-- ✅ **Full CRUD** items + categories
-- ✅ **Real-time search** across name/description/category
-- ✅ **Category filter** dropdown (All + specific)
-- ✅ **Long-press editing** (0.6s timer)
-- ✅ **Material theme** responsive across phone/tablet/desktop
-
-### 🌱 **Enhanced Seeding**
-- **Progress dialog** during seeding
-- **8 categories** + **8 items** pre-loaded
-- **Category relationships** working perfectly
+Godot 4.4.1 + GDScript + SQLite 4.5  
+Primary targets: Android, Web, Linux, Windows  
+License: MIT, most icons are based upon https://github.com/googlefonts/noto-emoji  
 
 ---
 
-## 🚀 **Quick Start**
+## Scope
+Single-household shopping list.  
+Works fully offline; optional self-hosted sync (M7) for multi-user households.  
+
+---
+
+## Development workflow
+I decided to try developing this project with "support" of an AI.  
+After playing a bit with kimi.ai it seemed to be capable of delivering what I needed.  
+From the very beginning I let Kimi generate most of the code, documents, even the milestones.  
+I just set the framework, like using Godot and SQlite, platforms, etc.  
+Then I reviewed each code block and iterated back and forth until it all worked as intended.  
+The project tought me a lot about  working with an AI, like setting very specific boundaries,
+keeping a close look at the generated code, working in small chunks.  
+And one "discovery" really turned out to be a game changer: learning how to put the AI into the proper context.  
+For this I created a "Godot expert" prompt as well as a script to collect all the info needed to start a fresh chat while giving it all the context it needs.  
+
+As I believe in the power of FOSS I put this all on a public github repository.  
+My knowledge about Godot is very limited, so do not expect any wizardry here. Any comments to improve the quality are welcome, I just can't promise to turn this into a fully working open source project with pull requests and such, as I have no experience with such things.  
+
+I am trying to show the main steps of the progress by committing the actual state of my project as "we" keep developing it.  
+
+Starting with this version of the README file I include this info about the workflow as it now becomes more of a issue/fix style instead of "let's see what the AI comes up with".  
+
+---
+
+## Feature History
+
+| Milestone | Date | Highlights |
+|-----------|------|------------|
+| Start | 2025-08-22 | initial commit, MIT license, Readme |
+| M1 | 2025-08-23 | Core CRUD: categories & items, SQLite migration v0→v1 |
+| M2 | 2025-08-23 | Android persistence fix, export_presets.cfg, 90 MB APK |
+| M3 | 2025-08-25 | Seeding manager with progress dialog, 8×8 sample data |
+| M4 | 2025-08-28 | Real-time search, category filter, long-press edit |
+| M5-a | 2025-09-02 | Shopping mode toggle, `in_cart` flag, DB migration v1→v2 |
+| M5-b | 2025-09-04 | Strike-through effect, native PO pipeline, `tr()` complete |
+| M6 | 2024-09-14 | Tint panel replaces strike-through, theme polish, scalable feedback |
+
+### Current Functionality (M6)
+- **Planning mode**: add, edit, delete, categorise, search.
+- **Shopping mode**: only needed items, tap to toggle `in_cart`, sorted by category (then last-bought).
+- **Themes**: light, dark, classic; persisted per device.
+- **Languages**: English, German; runtime switch, PO workflow.
+- **Navigation**: Android back button & PC Esc close pop-ups and return to planning screen.
+- **Data**: SQLite, sequential migrations, (JSON export/import (Tools screen)).
+- **Input**: touch & mouse; long-press (0.6 s) to edit; drag-scroll threshold to prevent mis-taps.
+
+---
+
+## Build & Run
 
 ```bash
-# 1. Clone
-git clone [repo-url]
+git clone https://github.com/NeoCortexOS/neoshop
 cd neoshop
-
-# 2. Open in Godot 4.4+
-godot project.godot
-
-# 3. Run → seed data auto-inserted
-# 4. Press "Add" or long-press items to edit
+# not sure if the next line will actually work, you have to install the android framework first and maybe do the initial export manually
+godot --path . --export-release Android builds/Android/Neoshop.apk
 ```
+
+No extra permissions; database lives in `user://neoshop.db`.
 
 ---
 
-## 📱 **Android Ready**
+## Test
+this is a neglected left over part of the AI's idea of implementing a test framework, does not work atm.
 
 ```bash
-# Build APK
-godot --export-release Android
-# Database persists across installs ✅
+godot --path . -s test/test_crud.gd
 ```
 
 ---
 
-## 🎯 **Live Development Flow**
+## Roadmap
 
-We iterate **live** in chat sessions:
-
-```mermaid
-graph LR
-	A[Describe feature] --> B[Drop .tscn/.gd]
-	B --> C[Test on device]
-	C --> D[Refine & commit]
-	D --> A
-```
+| Milestone | Focus |
+|-----------|-------|
+| M7 | Multi-user sync: REST/JSON, auth key, last-write-wins, Docker image |
+| M8 | shop specific ordering of categories, handling on-sale price|
+| M9 | tbd... |
 
 ---
 
-## 📋 **Current Status**
-
-| Feature | Status |
-|---------|--------|
-| Planning Mode | ✅ Complete |
-| Category Management | ✅ Complete |
-| Database Migration | ✅ v0→2 Working |
-| Android Persistence | ✅ Solved |
-| Shopping Mode | 🔄 Next Milestone |
-| Multi-list Support | 🔄 Future |
-
----
-
-## 🗂️ **Key Files**
-- `res://db/migration.gd` - Database evolution
-- `res://scripts/seed_manager.gd` - Enhanced seeding
-- `res://ui/category_editor.tscn` - Category CRUD
-- `res://ui/PlanningScreen.tscn` - Main interface
-
----
-
-**Ready for M2 Android deployment!** 🚀
+## Privacy
+Designed for private household use only. Self-hosted server option will carry a GDPR disclaimer.

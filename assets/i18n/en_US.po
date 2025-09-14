@@ -35,8 +35,8 @@ msgid "Dark"
 msgstr "Dark"
 
 #: ui/setup_screen.tscn
-msgid "System"
-msgstr "System"
+msgid "Classic"
+msgstr "Classic"
 
 #: ui/setup_screen.tscn
 msgid "LANGUAGE"
@@ -48,7 +48,7 @@ msgstr "English"
 
 #: ui/setup_screen.tscn
 msgid "Deutsch"
-msgstr "Deutsch"
+msgstr "German"
 
 #: ui/setup_screen.tscn
 msgid "APPLY"
@@ -60,7 +60,7 @@ msgstr "Cancel"
 
 #: ui/category_editor.gd ui/item_editor.tscn
 msgid "Save"
-msgstr ""
+msgstr "Save"
 
 #: ui/category_editor.gd ui/item_editor.tscn
 msgid "Cancel"
@@ -68,91 +68,91 @@ msgstr "Cancel"
 
 #: ui/category_editor.gd
 msgid "Category name"
-msgstr ""
+msgstr "Category name"
 
 #: ui/category_editor.gd
 msgid "🗑"
-msgstr ""
+msgstr "🗑"
 
 #: ui/category_editor.tscn
 msgid "Manage Categories"
-msgstr ""
+msgstr "Manage Categories"
 
 #: ui/category_editor.tscn
 msgid "Add Category"
-msgstr ""
+msgstr "Add Category"
 
 #: ui/item_editor.gd
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: ui/item_editor.gd
 msgid "pcs"
-msgstr ""
+msgstr "pcs"
 
 #: ui/item_editor.gd
 msgid "0"
-msgstr ""
+msgstr "0"
 
 #: ui/item_editor.tscn
 msgid "Item Editor"
-msgstr ""
+msgstr "Item Editor"
 
 #: ui/item_editor.tscn
-msgid "🗑 Delete"
-msgstr ""
+msgid "DELETE"
+msgstr "Delete"
 
 #: ui/item_editor.tscn
 msgid "Name:"
-msgstr ""
+msgstr "Name:"
 
 #: ui/item_editor.tscn
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: ui/item_editor.tscn
 msgid "Amnt:"
-msgstr ""
+msgstr "Amnt:"
 
 #: ui/item_editor.tscn
 msgid "Amount"
-msgstr ""
+msgstr "Amount"
 
 #: ui/item_editor.tscn
 msgid "Unit"
-msgstr ""
+msgstr "Unit"
 
 #: ui/item_editor.tscn
 msgid "Price:"
-msgstr ""
+msgstr "Price:"
 
 #: ui/item_editor.tscn
 msgid "Price €"
-msgstr ""
+msgstr "Price €"
 
 #: ui/item_editor.tscn
 msgid "Category:"
-msgstr ""
+msgstr "Category:"
 
 #: ui/item_editor.tscn ui/item_row.tscn
 msgid "category"
-msgstr ""
+msgstr "category"
 
 #: ui/item_editor.tscn
 msgid "Description:"
-msgstr ""
+msgstr "Description:"
 
 #: ui/item_editor.tscn
 msgid "Description (optional)"
-msgstr ""
+msgstr "Description (optional)"
 
 #: ui/item_editor.tscn
 msgid "Need"
-msgstr ""
+msgstr "Need"
 
 #: ui/item_editor.tscn
 msgid "Cart"
-msgstr ""
+msgstr "Cart"
 
 #: ui/item_row.tscn
 msgid ""
@@ -160,59 +160,78 @@ msgid ""
 "\n"
 "litre"
 msgstr ""
+"1.5\n"
+"\n"
+"litre"
 
 #: ui/item_row.tscn
-msgid "no name"
-msgstr ""
+msgid "ITEMNAME"
+msgstr "Itemname"
 
 #: ui/item_row.tscn
 msgid "0.00 €"
-msgstr ""
+msgstr "0.00 €"
 
 #: ui/item_row.tscn
 msgid "no desc"
-msgstr ""
+msgstr "no desc"
+
+#: ui/planning_screen.gd
+msgid "loading"
+msgstr "loading"
+
+#: ui/planning_screen.gd
+msgid "shopping"
+msgstr "shopping"
+
+#: ui/planning_screen.gd
+msgid "planning"
+msgstr "planning"
 
 #: ui/planning_screen.gd
 msgid "All"
-msgstr ""
+msgstr "All"
 
 #: ui/planning_screen.tscn
-msgid "Neoshop – %s (planning)"
-msgstr ""
+msgid "Neoshop"
+msgstr "Neoshop"
 
 #: ui/planning_screen.tscn
 msgid "🔍 search…"
-msgstr ""
-
-#: ui/planning_screen.tscn
-msgid "✏️"
-msgstr ""
-
-#: ui/planning_screen.tscn
-msgid "🌱 Seed"
-msgstr ""
-
-#: ui/tools_screen.tscn
-msgid "←"
-msgstr "←"
+msgstr "🔍 search…"
 
 #: ui/tools_screen.tscn
 msgid "TOOLS"
-msgstr ""
+msgstr "Tools"
 
 #: ui/tools_screen.tscn
 msgid "Seed Sample Data"
-msgstr ""
+msgstr "Seed Sample Data"
 
 #: ui/tools_screen.tscn
 msgid "Export Database"
-msgstr ""
+msgstr "Export Database"
 
 #: ui/tools_screen.tscn
 msgid "Import Database"
-msgstr ""
+msgstr "Import Database"
 
 #: ui/tools_screen.tscn
 msgid "Diagnostics"
-msgstr ""
+msgstr "Diagnostics"
+
+#: ui/tools_screen.tscn
+msgid "BACK"
+msgstr "back"
+
+#~ msgid "🗑 Delete"
+#~ msgstr "🗑 Delete"
+
+#~ msgid "🌱 Seed"
+#~ msgstr "🌱 Seed"
+
+#~ msgid "System"
+#~ msgstr "System"
+
+#~ msgid "←"
+#~ msgstr "←"
