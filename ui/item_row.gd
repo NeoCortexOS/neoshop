@@ -83,7 +83,7 @@ func update_from_item(item: Dictionary) -> void:
 	if item_id == -1:
 		item_id = int(item.get("id", 0))
 
-	print("update_from_item: ", item_id, " shopping_mode: ", DB.shopping_mode)
+	#print("update_from_item: ", item_id, " shopping_mode: ", DB.shopping_mode)
 	var iname       = str(item.get("name",        ""))
 	var amount      = float(item.get("amount",     0.0))
 	var unit        = str(item.get("unit",         ""))
@@ -110,7 +110,7 @@ func update_from_item(item: Dictionary) -> void:
 	# --- shopping tint ---
 	#modulate = Color(1, 0.8, 0.8, 0.6) if (DB.shopping_mode and in_cart) else Color.WHITE
 	if (DB.shopping_mode and in_cart):
-		print("shopping and in_cart: ", item_id)
+		#print("shopping and in_cart: ", item_id)
 		#%ItemRow.modulate = Color(1, 0.8, 0.8, 0.6)
 		%inCartPanel.visible = true
 		#pass #NC
@@ -136,7 +136,7 @@ func update_from_item(item: Dictionary) -> void:
 func set_shopping_mode(enabled: bool) -> void:
 	shopping_mode = enabled
 	#_update_need_check_appearance()
-	print("set_shopping_mode: ", shopping_mode)
+	#print("set_shopping_mode: ", shopping_mode)
 	if item_id != -1:
 		var items := DB.select_items("id = ?", [item_id])
 		if not items.is_empty():
@@ -166,7 +166,6 @@ func _on_item_row_input(event: InputEvent) -> void:
 			var dist : float = (event.position - touch_start_pos).length()
 			for c in get_children():
 				if c is Timer and c.wait_time == LONG_PRESS_TIME:
-					print("cleared child: ", c)
 					c.queue_free()
 			if not has_moved and not is_scrolling and dist < TAP_MAX_DISTANCE:
 				if DB.shopping_mode:
@@ -193,7 +192,7 @@ func _on_long_press_detected() -> void:
 # FEEDBACK ANIMATION  (fixed)
 # --------------------------------------------------
 func _show_tap_feedback() -> void:
-	print("tap feedback")
+	#print("tap feedback")
 	# detach from layout while scaling
 	var old_h := size_flags_horizontal
 	var old_v := size_flags_vertical
@@ -221,10 +220,10 @@ func _update_need_check_appearance() -> void:
 	pass
 
 
-func toggle_needed(item_id: int, needed: bool) -> void:
-		print("toggle_needed id: ", item_id, " need: ", needed)
-		if item_id != -1:
-			var items := DB.select_items("id = ?", [item_id])
+func toggle_needed(p_item_id: int, needed: bool) -> void:
+		#print("toggle_needed id: ", p_item_id, " need: ", needed)
+		if p_item_id != -1:
+			var items := DB.select_items("id = ?", [p_item_id])
 			if not items.is_empty():
 				update_from_item(items[0])
 	

@@ -23,6 +23,7 @@ DB="*res://db/database.gd"
 ThemeManager="*res://scripts/theme_manager.gd"
 BackupManager="*res://scripts/backup_manager.gd"
 LocaleHelper="*res://scripts/locale_helper.gd"
+P2P="*res://scripts/p2p_manager.gd"
 
 [display]
 

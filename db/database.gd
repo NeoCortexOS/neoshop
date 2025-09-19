@@ -37,38 +37,41 @@ func _table_exists(table:String) -> bool:
 	var success = _db.query_with_bindings("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", [table])
 	print("godot sql table: ", table, " result: ", success)
 	return _db.query_result.size() > 0
-	
+
+
+# ---------- generic dirty mark ----------
+func _touch(table: String, id: int) -> void:
+	var sql = "UPDATE %s SET updated_at = (unixepoch('subsec')*1000), sync_flag = 1 WHERE id = ?" % table
+	var success = _db.query_with_bindings(sql, [id])
+	if not success:
+		push_error("Failed to touch %s id %d" % [table, id])
+
+
 # --------------------------------------------------------------
 # Category
 # --------------------------------------------------------------
-@warning_ignore("shadowed_variable_base_class")
-#func insert_category(name: String) -> int:
-	#_db.query_with_bindings("INSERT INTO category(name) VALUES (?)", [name])
-	#_db.query("SELECT last_insert_rowid() AS id")
-	#return int(_db.query_result[0]["id"])
-func insert_category(name: String) -> int:
-	var query = "INSERT INTO category (name) VALUES (?)"
-	var success = _db.query_with_bindings(query, [name])
-	if success:
-		print("Insert successful: " + name)
-		return int(_db.get_last_insert_rowid())
-	else:
-		push_error("Failed to insert category: " + name)
+func insert_category(cat_name: String) -> int:
+	var success = _db.query_with_bindings(
+		"INSERT INTO category(name,updated_at,sync_flag) VALUES (?,unixepoch('subsec')*1000,1)", [cat_name])
+	if not success:
+		push_error("Failed to insert category: " + cat_name)
 		return -1
+	return int(_db.get_last_insert_rowid())
 
 
-@warning_ignore("shadowed_variable_base_class")
-func update_category(id: int, name: String) -> void:
-	var query = "UPDATE category SET name = ? WHERE id = ?"
-	var success = _db.query_with_bindings(query, [name, id])
+func update_category(id: int, cat_name: String) -> void:
+	var success = _db.query_with_bindings(
+		"UPDATE category SET name = ?, updated_at = unixepoch('subsec')*1000, sync_flag = 1 WHERE id = ?", [cat_name, id])
 	if not success:
 		push_error("Failed to update category: " + str(id))
 
+
 func delete_category(id: int) -> void:
-	var query = "DELETE FROM category WHERE id = ?"
-	var success = _db.query_with_bindings(query, [id])
+	# soft delete
+	var success = _db.query_with_bindings(
+		"UPDATE category SET sync_flag = 3, updated_at = unixepoch('subsec')*1000 WHERE id = ?", [id])
 	if not success:
-		push_error("Failed to delete category: " + str(id))
+		push_error("Failed to soft-delete category: " + str(id))
 
 
 func select_categories() -> Array:
@@ -79,42 +82,14 @@ func select_categories() -> Array:
 # --------------------------------------------------------------
 # Update insert_item to handle new columns
 func insert_item(p: Dictionary) -> int:
-	print("Attempting to insert item:", p)
+	p["updated_at"] = Time.get_unix_time_from_system()*1000
+	p["sync_flag"]  = 1
 	var query = """
-	INSERT INTO item (name, amount, unit, description, category_id, needed, in_cart, last_bought, price_cents, on_sale)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO item (name, amount, unit, description, category_id,
+						  needed, in_cart, last_bought, price_cents, on_sale,
+						  updated_at, sync_flag)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
 	"""
-	
-	var params = [
-		p.get("name", ""),
-		p.get("amount", 0.0),
-		p.get("unit", ""),
-		p.get("description", ""),
-		p.get("category_id", -1),
-		p.get("needed", false),
-		p.get("in_cart", false),
-		p.get("last_bought", 0),
-		p.get("price_cents", 0),
-		p.get("on_sale", false)
-	]
-	
-	var success = _db.query_with_bindings(query, params)
-	if success:
-		print("Insert successful, ID:", p.get("id"))
-		return int(_db.get_last_insert_rowid())
-
-	print("Insert failed - SQLite error: ", _db.error_message if _db.has_method("error_message") else "Unknown error")
-	return -1
-
-
-func update_item(p: Dictionary) -> void:
-	var query = """
-	UPDATE item SET 
-		name = ?, amount = ?, unit = ?, description = ?, category_id = ?, 
-		needed = ?, in_cart = ?, last_bought = ?, price_cents = ?, on_sale = ?
-	WHERE id = ?
-	"""
-	
 	var params = [
 		p.get("name", ""),
 		p.get("amount", 0.0),
@@ -126,10 +101,44 @@ func update_item(p: Dictionary) -> void:
 		p.get("last_bought", 0),
 		p.get("price_cents", 0),
 		p.get("on_sale", false),
+		p["updated_at"],
+		p["sync_flag"]
+	]
+	var success = _db.query_with_bindings(query, params)
+	if success:
+		return int(_db.get_last_insert_rowid())
+	push_error("Insert item failed")
+	return -1
+
+
+func update_item(p: Dictionary) -> void:
+	p["updated_at"] = Time.get_unix_time_from_system()*1000
+	p["sync_flag"]  = 1
+	var query = """
+		UPDATE item SET
+			name = ?, amount = ?, unit = ?, description = ?, category_id = ?,
+			needed = ?, in_cart = ?, last_bought = ?, price_cents = ?, on_sale = ?,
+			updated_at = ?, sync_flag = ?
+		WHERE id = ?
+	"""
+	var params = [
+		p.get("name", ""),
+		p.get("amount", 0.0),
+		p.get("unit", ""),
+		p.get("description", ""),
+		p.get("category_id", -1),
+		p.get("needed", false),
+		p.get("in_cart", false),
+		p.get("last_bought", 0),
+		p.get("price_cents", 0),
+		p.get("on_sale", false),
+		p["updated_at"],
+		p["sync_flag"],
 		p.get("id", -1)
 	]
-	
-	_db.query_with_bindings(query, params)
+	var success = _db.query_with_bindings(query, params)
+	if not success:
+		push_error("Failed to update item: " + str(p.get("id", -1)))
 
 
 func select_items(where_sql := "", params := []) -> Array:
@@ -141,17 +150,36 @@ func select_items(where_sql := "", params := []) -> Array:
 	return _db.query_result
 
 func delete_item(id: int) -> void:
-	_db.query_with_bindings("DELETE FROM item WHERE id = ?", [id])
-
+	var success = _db.query_with_bindings(
+		"UPDATE item SET sync_flag = 3, updated_at = unixepoch('subsec')*1000 WHERE id = ?", [id])
+	if not success:
+		push_error("Failed to soft-delete item: " + str(id))
 
 func toggle_needed(id: int, needed: bool) -> void:
-	_db.query_with_bindings(
-		"UPDATE item SET needed = ? WHERE id = ?", [needed, id])
+	var success = _db.query_with_bindings(
+		"UPDATE item SET needed = ?, updated_at = unixepoch('subsec')*1000, sync_flag = 1 WHERE id = ?",
+		[needed, id])
+	if not success:
+		push_error("Failed to toggle needed: " + str(id))
 	print("DB toggle_needed id: ", id, " need: ", needed)
 
 
 func toggle_in_cart(id: int) -> void:
-	_db.query_with_bindings("UPDATE item SET in_cart = NOT in_cart WHERE id = ?", [id])
+	# atomic: flip in_cart, touch updated_at, set last_bought if newly moved into cart
+	var sql = """
+		UPDATE item
+		SET in_cart = NOT in_cart,
+			updated_at = unixepoch('subsec')*1000,
+			sync_flag = 1,
+			last_bought = CASE
+				WHEN (NOT in_cart) THEN unixepoch('subsec')
+				ELSE last_bought
+			END
+		WHERE id = ?
+	"""
+	var success = _db.query_with_bindings(sql, [id])
+	if not success:
+		push_error("Failed to toggle in_cart: " + str(id))
 	print("DB toggle_in_cart, id: ", id)
 
 
@@ -175,3 +203,15 @@ func set_config(key: String, value: String) -> void:
 		"INSERT OR REPLACE INTO config(key, value) VALUES (?, ?)",
 		[key, value]
 	)
+
+
+# ---------- sync helpers ----------
+func select_dirty(table: String) -> Array:
+	var success = _db.query_with_bindings("SELECT * FROM " + table + " WHERE sync_flag != 0 ORDER BY updated_at", [])
+	print("DB.select_dirty: ", success)
+	return _db.query_result if success else []
+
+func mark_clean(table: String, id: int) -> void:
+	var success = _db.query_with_bindings("UPDATE %s SET sync_flag = 0 WHERE id = ?" % table, [id])
+	if not success:
+		push_error("Failed to mark clean %s id %d" % [table, id])

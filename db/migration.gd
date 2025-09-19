@@ -1,7 +1,7 @@
 # res://db/migration.gd
 extends Node
 
-const CURRENT_VERSION = 2
+const CURRENT_VERSION = 1
 
 func check_and_migrate(db) -> bool:
 	var current_version = _get_schema_version(db)
@@ -37,12 +37,18 @@ func _perform_migration(db, from_version: int) -> bool:
 				print("DB migration to 1")
 				_update_version(db, 1)
 				current = 1
-			1:
-				if not _migrate_v1_to_v2(db):
-					return false
-				print("DB migration to 2")
-				_update_version(db, 2)
-				current = 2
+			#1:
+				#if not _migrate_v1_to_v2(db):
+					#return false
+				#print("DB migration to 2")
+				#_update_version(db, 2)
+				#current = 2
+			#2:
+				#if not _migrate_v2_to_v3(db):
+					#return false
+				#print("DB migration to 3")
+				#_update_version(db, 3)
+				#current = 3
 			_:
 				break
 	
@@ -57,27 +63,48 @@ func _update_version(db, version: int) -> void:
 	)
 
 func _migrate_v0_to_v1(db) -> bool:
-	var tables = [
-		"CREATE TABLE IF NOT EXISTS category (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE)",
-		"CREATE TABLE IF NOT EXISTS item (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, amount REAL, unit TEXT, description TEXT, category_id INTEGER, needed BOOLEAN DEFAULT 0, last_bought INTEGER, price_cents INTEGER, on_sale BOOLEAN DEFAULT 0)",
-		"CREATE TABLE IF NOT EXISTS shop (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, sort_order TEXT)",
-		"CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)"
+	var ddl = [
+		# ---------- category ----------
+		"CREATE TABLE IF NOT EXISTS category (
+			id         INTEGER PRIMARY KEY,
+			name       TEXT UNIQUE,
+			updated_at INTEGER NOT NULL DEFAULT (unixepoch('subsec')*1000),
+			sync_flag  INTEGER NOT NULL DEFAULT 0
+		)",
+		# ---------- item ----------
+		"CREATE TABLE IF NOT EXISTS item (
+			id          INTEGER PRIMARY KEY,
+			name        TEXT NOT NULL,
+			amount      REAL,
+			unit        TEXT,
+			description TEXT,
+			category_id INTEGER REFERENCES category(id) ON DELETE SET NULL,
+			needed      BOOLEAN DEFAULT 0,
+			in_cart     BOOLEAN DEFAULT 0,
+			last_bought INTEGER,
+			price_cents INTEGER,
+			on_sale     BOOLEAN DEFAULT 0,
+			updated_at  INTEGER NOT NULL DEFAULT (unixepoch('subsec')*1000),
+			sync_flag   INTEGER NOT NULL DEFAULT 0
+		)",
+		# ---------- shop ----------
+		"CREATE TABLE IF NOT EXISTS shop (
+			id         INTEGER PRIMARY KEY,
+			name       TEXT UNIQUE,
+			sort_order TEXT,
+			updated_at INTEGER NOT NULL DEFAULT (unixepoch('subsec')*1000),
+			sync_flag  INTEGER NOT NULL DEFAULT 0
+		)",
+		# ---------- config ----------
+		"CREATE TABLE IF NOT EXISTS config (
+			key        TEXT PRIMARY KEY,
+			value      TEXT,
+			updated_at INTEGER NOT NULL DEFAULT (unixepoch('subsec')*1000),
+			sync_flag  INTEGER NOT NULL DEFAULT 0
+		)"
 	]
-	
-	for sql in tables:
+	for sql in ddl:
 		if not db.query(sql):
-			push_error("Migration v0->v1 failed: " + sql)
+			push_error("Migration v0→v1 failed: " + sql)
 			return false
-	
 	return true
-
-func _migrate_v1_to_v2(db) -> bool:
-	# Check if column exists
-	var success = db.query("PRAGMA table_info(item)")
-	if success and db.query_result.size() > 0:
-		for column in db.query_result:
-			if column["name"] == "in_cart":
-				return true  # Already exists
-	
-	# Add the column
-	return db.query("ALTER TABLE item ADD COLUMN in_cart BOOLEAN DEFAULT 0")

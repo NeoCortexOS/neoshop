@@ -43,9 +43,10 @@ Starting with this version of the README file I include this info about the work
 | M4 | 2025-08-28 | Real-time search, category filter, long-press edit |
 | M5-a | 2025-09-02 | Shopping mode toggle, `in_cart` flag, DB migration v1→v2 |
 | M5-b | 2025-09-04 | Strike-through effect, native PO pipeline, `tr()` complete |
-| M6 | 2024-09-14 | Tint panel replaces strike-through, theme polish, scalable feedback |
+| M6 | 2025-09-14 | Tint panel replaces strike-through, theme polish, scalable feedback |
+| M7 | 2025-09-18 | Local-Network P2P Sync via WebSocket (partial, items only atm.)
 
-### Current Functionality (M6)
+### Current Functionality (M7)
 - **Planning mode**: add, edit, delete, categorise, search.
 - **Shopping mode**: only needed items, tap to toggle `in_cart`, sorted by category (then last-bought).
 - **Themes**: light, dark, classic; persisted per device.
@@ -53,6 +54,35 @@ Starting with this version of the README file I include this info about the work
 - **Navigation**: Android back button & PC Esc close pop-ups and return to planning screen.
 - **Data**: SQLite, sequential migrations, (JSON export/import (Tools screen)).
 - **Input**: touch & mouse; long-press (0.6 s) to edit; drag-scroll threshold to prevent mis-taps.
+
+## Milestone 7 – Local-Network P2P Sync – COMPLETE
+Date: 2025-09-18  
+
+**Simple-tier (default)**  
+- UDP broadcast discovery + WebSocket transfer – zero permissions.  
+- One-tap “Host” / “Join” inside Tools screen.  
+- Last-write-wins merge, ≤ 1 s conflict window (family-safe).  
+- Falls back to JSON export/import when LAN unavailable.  
+
+**Limitations**  
+- LAN-only (same subnet).  
+- No encryption (documented in-app).  
+- Web export requires localhost or HTTPS for WebSocket.
+
+##  Optional Advanced Tier
+- AES-256 family-shared key (opt-in).  
+
+
+---
+
+## Roadmap
+
+| Milestone | Focus |
+|-----------|-------|
+| M8 | Multi-table sync (categories, shops), Cancel / progress UI |
+| M9 | shop specific ordering of categories, handling on-sale price|
+| M10 | tbd... |
+
 
 ---
 
@@ -76,15 +106,6 @@ this is a neglected left over part of the AI's idea of implementing a test frame
 godot --path . -s test/test_crud.gd
 ```
 
----
-
-## Roadmap
-
-| Milestone | Focus |
-|-----------|-------|
-| M7 | Multi-user sync: REST/JSON, auth key, last-write-wins, Docker image |
-| M8 | shop specific ordering of categories, handling on-sale price|
-| M9 | tbd... |
 
 ---
 

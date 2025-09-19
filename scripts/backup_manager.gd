@@ -2,6 +2,7 @@ extends Node
 class_name BackupMgr
 
 const BACKUP_DIR := "user://backups"
+#const BACKUP_DIR := "/sdcard/Download"   # public, always writable
 
 func export_json() -> String:
 	var ts := int(Time.get_unix_time_from_system())
