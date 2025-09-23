@@ -137,8 +137,41 @@ func update_item(p: Dictionary) -> void:
 		p.get("id", -1)
 	]
 	var success = _db.query_with_bindings(query, params)
+	print("DB updated: ", str(p.get("id", -1)), " success: ", success)
 	if not success:
 		push_error("Failed to update item: " + str(p.get("id", -1)))
+
+# res://db/database.gd
+func upsert_item(p: Dictionary) -> void:
+	p["updated_at"] = Time.get_unix_time_from_system()*1000
+	p["sync_flag"]  = 0          # mark clean immediately
+	var id : Variant = p.get("id", -1)
+
+	# -- try update first --
+	var affected := 0
+	if id > 0:
+		var sql := """
+			UPDATE item SET
+				name = ?, amount = ?, unit = ?, description = ?, category_id = ?,
+				needed = ?, in_cart = ?, last_bought = ?, price_cents = ?, on_sale = ?,
+				updated_at = ?, sync_flag = ?
+			WHERE id = ?
+		"""
+		var params := [
+			p.get("name",""), p.get("amount",0.0), p.get("unit",""),
+			p.get("description",""), p.get("category_id",-1),
+			p.get("needed",false), p.get("in_cart",false),
+			p.get("last_bought",0), p.get("price_cents",0), p.get("on_sale",false),
+			p["updated_at"], p["sync_flag"], id
+		]
+		_db.query_with_bindings(sql, params)
+		affected = _db.get_last_insert_rowid()   # dummy call to flush
+		affected = _db.query_result.size()       # 0 if row did not exist
+
+	# -- no existing row → insert --
+	if affected == 0:
+		p.erase("id")   # let DB assign new id
+		insert_item(p)
 
 
 func select_items(where_sql := "", params := []) -> Array:
@@ -209,9 +242,23 @@ func set_config(key: String, value: String) -> void:
 func select_dirty(table: String) -> Array:
 	var success = _db.query_with_bindings("SELECT * FROM " + table + " WHERE sync_flag != 0 ORDER BY updated_at", [])
 	print("DB.select_dirty: ", success)
+	if success:
+		print("number of dirty rows: ",_db.query_result.size())
 	return _db.query_result if success else []
 
 func mark_clean(table: String, id: int) -> void:
 	var success = _db.query_with_bindings("UPDATE %s SET sync_flag = 0 WHERE id = ?" % table, [id])
+	print("mark clean: ", table, " id: ", id)
 	if not success:
 		push_error("Failed to mark clean %s id %d" % [table, id])
+
+# res://db/database.gd  (add)
+func get_sync_table() -> String:
+	# called by P2P to show which table is syncing
+	return "item"   # current scope
+
+func clear_databases() -> void:
+	DB._db.query("BEGIN")
+	DB._db.query("DELETE FROM item")
+	DB._db.query("DELETE FROM category")
+	DB._db.query("COMMIT")
