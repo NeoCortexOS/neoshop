@@ -127,7 +127,7 @@ func _add_items() -> int:
 			}
 			var inserted_id = DB.insert_item(params)
 			print("Inserted item with ID:", inserted_id)
-			if inserted_id > 0:
+			if inserted_id != "":
 				added += 1
 		else:
 			print("Category not found:", category_name)

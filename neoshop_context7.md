@@ -71,7 +71,15 @@ Target: Android (primary), Linux, Windows, macOS, Web (localhost only)
 - Works air-gapped, no external binaries, no crypto.  
 - Falls back to JSON export/import if LAN unavailable.
 
-
+## M7-bis – TCP Reliability Hardening  
+Date: 2025-09-25  
+Symptom: “ACK timeout page 0” although client logged ACK sent  
+Cause: Host closed socket while client ACK still in TCP send buffer  
+Fix:  
+- set_no_delay(true) on accepted peer  
+- Host waits 200 ms after last page before close  
+- Client yields 1 frame after ACK to push Godot→kernel  
+Risk: 1 – LAN-only timing tweak, no crypto change  
 
 ## 🔧 Quick-start Cheat-sheet for AI Assistants (updated)
 - **Database singleton**: `DB` (already autoload)  

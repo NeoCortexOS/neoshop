@@ -45,6 +45,7 @@ Starting with this version of the README file I include this info about the work
 | M5-b | 2025-09-04 | Strike-through effect, native PO pipeline, `tr()` complete |
 | M6 | 2025-09-14 | Tint panel replaces strike-through, theme polish, scalable feedback |
 | M7 | 2025-09-18 | Local-Network P2P Sync via WebSocket (partial, items only atm.)
+| M7-bis | 2025-09-25 | Reliable LAN sync: TCP_NODELAY, 200 ms grace drain, frame yield ACK flush |
 
 ### Current Functionality (M7)
 - **Planning mode**: add, edit, delete, categorise, search.
@@ -55,7 +56,7 @@ Starting with this version of the README file I include this info about the work
 - **Data**: SQLite, sequential migrations, (JSON export/import (Tools screen)).
 - **Input**: touch & mouse; long-press (0.6 s) to edit; drag-scroll threshold to prevent mis-taps.
 
-## Milestone 7 – Local-Network P2P Sync – COMPLETE
+## Milestone 7 – Local-Network P2P Sync
 Date: 2025-09-18  
 
 **Simple-tier (default)**  

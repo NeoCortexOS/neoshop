@@ -155,7 +155,7 @@ func _refresh() -> void:
 	var items_count: int = 0
 	for it in items:
 		items_count += 1
-		var id : int = int(it["id"])
+		var id : String = it.get(["id"],"")
 		var row : ItemRow = preload("res://ui/item_row.tscn").instantiate() as ItemRow
 		row.setup(it)
 		#row.set_shopping_mode(DB.shopping_mode)
@@ -171,7 +171,7 @@ func _refresh() -> void:
 	print("_refresh items: ", items_count, " shopping_mode = ", DB.shopping_mode)
 
 
-func _open_editor(id: int) -> void:
+func _open_editor(id: String) -> void:
 	print("open_editor: ", id)
 	var sc := %Scroll
 	sc.scroll_vertical = 0
@@ -191,20 +191,20 @@ func _open_editor(id: int) -> void:
 		_refresh()
 	)
 	add_child(popup)
-	if id != -1:
+	if id != "-1":
 		popup.edit_item(id)
 	else:
 		popup.new_item()
 	popup.show()
 
 
-func _edit_item(id: int) -> void:
+func _edit_item(id: String) -> void:
 	print("edit_item: ", id)
 	_open_editor(id)
 
 
 func _on_add() -> void:
-	_open_editor(-1)
+	_open_editor("-1")
 
 
 func _on_settings() -> void:
@@ -229,7 +229,7 @@ func _on_shopping_toggle() -> void:
 	_refresh()
 
 
-func _on_in_cart_changed(item_id: int) -> void:
+func _on_in_cart_changed(item_id: String) -> void:
 	DB.toggle_in_cart(item_id)
 	_refresh()
 	print("in_cart_changed")

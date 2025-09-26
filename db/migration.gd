@@ -1,7 +1,7 @@
 # res://db/migration.gd
 extends Node
 
-const CURRENT_VERSION = 1
+const CURRENT_VERSION = 2
 
 func check_and_migrate(db) -> bool:
 	var current_version = _get_schema_version(db)
@@ -37,12 +37,12 @@ func _perform_migration(db, from_version: int) -> bool:
 				print("DB migration to 1")
 				_update_version(db, 1)
 				current = 1
-			#1:
-				#if not _migrate_v1_to_v2(db):
-					#return false
-				#print("DB migration to 2")
-				#_update_version(db, 2)
-				#current = 2
+			1:
+				if not _migrate_v1_to_v2(db):
+					return false
+				print("DB migration to 2")
+				_update_version(db, 2)
+				current = 2
 			#2:
 				#if not _migrate_v2_to_v3(db):
 					#return false
@@ -107,4 +107,35 @@ func _migrate_v0_to_v1(db) -> bool:
 		if not db.query(sql):
 			push_error("Migration v0→v1 failed: " + sql)
 			return false
+	return true
+
+
+func _migrate_v1_to_v2(db) -> bool:
+	var ddl = [
+		"CREATE TABLE item_v2 (
+			id          TEXT PRIMARY KEY,
+			name        TEXT NOT NULL,
+			amount      REAL,
+			unit        TEXT,
+			description TEXT,
+			category_id INTEGER REFERENCES category(id) ON DELETE SET NULL,
+			needed      BOOLEAN DEFAULT 0,
+			in_cart     BOOLEAN DEFAULT 0,
+			last_bought INTEGER,
+			price_cents INTEGER,
+			on_sale     BOOLEAN DEFAULT 0,
+			updated_at  INTEGER NOT NULL DEFAULT (unixepoch('subsec')*1000),
+			sync_flag   INTEGER NOT NULL DEFAULT 0
+		);",
+		"INSERT INTO item_v2 SELECT
+			lower(hex(randomblob(16))), name, amount, unit, description,
+			category_id, needed, in_cart, last_bought, price_cents, on_sale,
+			updated_at, sync_flag
+			FROM item;",
+		"DROP TABLE item;",
+		"ALTER TABLE item_v2 RENAME TO item;"
+	]
+	for sql in ddl:
+		if not db.query(sql):
+			push_error("Migration v1→v2 failed: " + sql); return false
 	return true

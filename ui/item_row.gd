@@ -2,8 +2,8 @@ extends PanelContainer
 class_name ItemRow
 
 signal long_pressed
-signal needed_changed(item_id: int, needed: bool)
-signal in_cart_changed(item_id: int)
+signal needed_changed(item_id: String, needed: bool)
+signal in_cart_changed(item_id: String)
 
 # --- gesture constants ---
 const TAP_MAX_DISTANCE  := 30.0
@@ -12,7 +12,7 @@ const SCROLL_THRESHOLD  := 15.0
 
 # --- state ---
 var shopping_mode : bool = false
-var item_id       : int  = -1
+var item_id       : String  = "-1"
 var touch_start_time  : float  = 0.0
 var touch_start_pos   : Vector2 = Vector2.ZERO
 var has_moved  : bool = false
@@ -76,12 +76,12 @@ func _ready() -> void:
 # PUBLIC API
 # --------------------------------------------------
 func setup(item: Dictionary) -> void:
-	item_id = int(item.get("id", 0))
+	item_id = item.get("id", "")
 	update_from_item(item)
 
 func update_from_item(item: Dictionary) -> void:
-	if item_id == -1:
-		item_id = int(item.get("id", 0))
+	if item_id == "-1":
+		item_id = item.get("id", "")
 
 	#print("update_from_item: ", item_id, " shopping_mode: ", DB.shopping_mode)
 	var iname       = str(item.get("name",        ""))
@@ -137,7 +137,7 @@ func set_shopping_mode(enabled: bool) -> void:
 	shopping_mode = enabled
 	#_update_need_check_appearance()
 	#print("set_shopping_mode: ", shopping_mode)
-	if item_id != -1:
+	if item_id != "-1":
 		var items := DB.select_items("id = ?", [item_id])
 		if not items.is_empty():
 			update_from_item(items[0])
@@ -220,9 +220,9 @@ func _update_need_check_appearance() -> void:
 	pass
 
 
-func toggle_needed(p_item_id: int, needed: bool) -> void:
+func toggle_needed(p_item_id: String, needed: bool) -> void:
 		#print("toggle_needed id: ", p_item_id, " need: ", needed)
-		if p_item_id != -1:
+		if p_item_id != "-1":
 			var items := DB.select_items("id = ?", [p_item_id])
 			if not items.is_empty():
 				update_from_item(items[0])

@@ -19,9 +19,13 @@ Core Knowledge
 - Cross-platform deployment: Windows 11, macOS Sonoma, Ubuntu 24, Android 14, iOS 17, Web (GLES3/2).  
 - Memory safety & performance: cache-friendly data layouts (Struct of Arrays), GDExtension ABI, hot-reload patterns, leak detection (`--check-leaks`).  
 - Debugging & profiling: remote scene tree, `--debug-gdscript`, `--gpu-profile`, Tracy integration, RenderDoc frame capture, GUT test hooks.
+- WebSocket server must poll until STATE_OPEN before first send_text; otherwise frames are silently dropped during handshake.
+- Small LAN packets: disable Nagle (set_no_delay(true)) on accepted TCP peer to avoid 200 ms Nagle delay.
+- Always wait ≥ 1 TCP RTT (≈ 2–5 ms LAN, 200 ms safe) after last outbound message before calling close() – otherwise FIN can precede final ACK and drop it.
+- Never trust send_text() alone for flush – yield one frame (await get_tree().create_timer(0.0)) to push Godot send-buffer → kernel → wire.
 
 Shopping-Domain Modelling
-- Product catalog, cart, order, VAT, discount rules, receipt PDF generation.  
+- Product catalog, cart, order.  
 - Relational schema design for multi-currency, multi-language product names.
 
 I18N Layer

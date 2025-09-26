@@ -2,6 +2,7 @@ extends Control
 
 const BACKUP_DIR := "user://backups"
 
+@onready var dirty_btn: Button = %DirtyButton
 @onready var host_btn: Button = %HostButton
 @onready var join_btn: Button = %JoinButton
 @onready var list: ItemList = %DiscoveredList
@@ -28,6 +29,7 @@ func _on_info_message(msg: String) -> void:
 
 
 func _ready() -> void:
+	dirty_btn.pressed.connect(_on_dirty)
 	host_btn.pressed.connect(_on_host)
 	join_btn.pressed.connect(_on_join)
 	list.item_selected.connect(_on_pick_device)
@@ -70,16 +72,23 @@ func _on_p2p_state(s: P2P.State) -> void:
 func _on_sync_failed() -> void:
 	info("❌ Sync failed – tap Host/Join to retry")
 
+
+func _on_dirty() -> void:
+	DB.mark_all_dirty()
+
+
 func _on_host() -> void:
 	P2P.host_session()
 	status.text = "Hosting on port 8090"
 	status.show()
+
 
 func _on_join() -> void:
 	list.show()
 	status.text = "Scanning LAN…"
 	status.show()
 	_refresh_list()
+
 
 func _refresh_list() -> void:
 	print("_refresh_list, discovered: ", P2P.discovered)
@@ -89,18 +98,21 @@ func _refresh_list() -> void:
 	if list.get_item_count() == 0:
 		list.add_item("No devices found")
 
+
 func _on_pick_device(index: int) -> void:
 	var item: Dictionary = P2P.discovered[index]   # explicit cast
 	P2P.join_session(item.addr, item.port)
 	status.text = "Connecting to %s…" % item.name
-	
-	
+
+
 func _on_hosting() -> void:
 	status.text = "Host ready – waiting for peer…"
+
 
 func _on_export() -> void:
 	var path := BackupManager.export_json()
 	OS.shell_open("file://" + path.get_base_dir())
+
 
 func _on_import() -> void:
 	var dlg := FileDialog.new()
@@ -117,21 +129,25 @@ func _on_import() -> void:
 	add_child(dlg)
 	dlg.popup_centered()
 
+
 func _on_import_file(path: String) -> void:
 	if BackupManager.import_json(path):
 		OS.alert(tr("Import successful!"))
 	else:
 		OS.alert(tr("Import failed!"))
 
+
 func _on_back() -> void:
 	P2P.close_all()
 	get_tree().change_scene_to_file("res://ui/planning_screen.tscn")
+
 
 func _on_seed() -> void:
 	var seed_manager = preload("res://scripts/seed_manager.gd").new()
 	add_child(seed_manager)
 	seed_manager.seed_completed.connect(_on_seed_done)
 	seed_manager.seed_database()
+
 
 func _on_seed_done(items: int, cats: int):
 	print("Seeding complete: %d items, %d categories" % [items, cats])
@@ -143,7 +159,6 @@ func _on_clear() -> void:
 	confirm.dialog_text = "This will erase the categories and items from your database.\n\nExisting data will be lost.\n\nContinue?"
 	confirm.dialog_autowrap = true
 	
-	
 	confirm.confirmed.connect(func():
 			DB.clear_databases()             
 			print("Databases deleted")
@@ -152,7 +167,7 @@ func _on_clear() -> void:
 	confirm.canceled.connect(func():
 		print("Deleting cancelled")
 	)
-		
+	
 	get_tree().root.add_child(confirm)
 	confirm.popup_centered()
 
@@ -160,6 +175,7 @@ func _on_clear() -> void:
 func _on_diagnostics() -> void:
 	var ok = DB._db.query("PRAGMA integrity_check")
 	OS.alert("Integrity: %s" % DB._db.query_result[0].integrity_check)
+
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.keycode in [KEY_BACK, KEY_ESCAPE] and event.pressed:

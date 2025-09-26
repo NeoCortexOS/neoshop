@@ -1,7 +1,7 @@
 class_name Item
 extends RefCounted
 
-var id: int
+var id: String
 var name: String
 var amount: float
 var unit: String
@@ -14,7 +14,7 @@ var price_cents: int
 var on_sale: bool
 
 func _init(d: Dictionary = {}):
-	id            = d.get("id", 0)
+	id            = d.get("id", "")
 	name          = d.get("name", "")
 	amount        = d.get("amount", 0.0)
 	unit          = d.get("unit", "")

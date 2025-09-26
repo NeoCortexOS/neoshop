@@ -6,6 +6,15 @@ var db_path := "user://neoshop.db"
 #var _migration: Migration
 var shopping_mode : bool = false
 
+signal info_message(text: String)      # forward to UI
+
+const UUID := preload("res://scripts/uuid.gd")
+
+
+func info(msg: String) -> void:
+	print("[DB] ", msg)
+	info_message.emit("[DB] " + msg) 
+
 
 func _ready():
 	_db = SQLite.new()
@@ -40,11 +49,11 @@ func _table_exists(table:String) -> bool:
 
 
 # ---------- generic dirty mark ----------
-func _touch(table: String, id: int) -> void:
+func _touch(table: String, id: String) -> void:
 	var sql = "UPDATE %s SET updated_at = (unixepoch('subsec')*1000), sync_flag = 1 WHERE id = ?" % table
 	var success = _db.query_with_bindings(sql, [id])
 	if not success:
-		push_error("Failed to touch %s id %d" % [table, id])
+		push_error("Failed to touch %s id %s" % [table, id])
 
 
 # --------------------------------------------------------------
@@ -59,11 +68,25 @@ func insert_category(cat_name: String) -> int:
 	return int(_db.get_last_insert_rowid())
 
 
-func update_category(id: int, cat_name: String) -> void:
+func update_category(id: int, cat_name: String) -> bool:
 	var success = _db.query_with_bindings(
 		"UPDATE category SET name = ?, updated_at = unixepoch('subsec')*1000, sync_flag = 1 WHERE id = ?", [cat_name, id])
+	# the following test for success will likely never fail as update does not return failure
 	if not success:
 		push_error("Failed to update category: " + str(id))
+		return false
+	else: return true
+
+
+func upsert_category(id: int, cat_name: String) -> void:
+	if select_category(id) != []:
+		update_category(id, cat_name)
+		mark_clean("category", str(id))
+		info("upsert category updated id: " + str(id))
+	else:
+	# -- no existing row → insert --
+		insert_category(cat_name)
+		info("upsert category inserted id: " + str(id))
 
 
 func delete_category(id: int) -> void:
@@ -77,20 +100,29 @@ func delete_category(id: int) -> void:
 func select_categories() -> Array:
 	_db.query("SELECT * FROM category ORDER BY name")
 	return _db.query_result
+
+
+func select_category(id: int) -> Array:
+	_db.query_with_bindings("SELECT * FROM category where id = ?", [id])
+	return _db.query_result
+
+
 # --------------------------------------------------------------
 # Item
 # --------------------------------------------------------------
-# Update insert_item to handle new columns
-func insert_item(p: Dictionary) -> int:
+func insert_item(p: Dictionary) -> String:
+	if p.get("id", "") == "":
+		p["id"] = UUID.v4()          # <-- string UUID
 	p["updated_at"] = Time.get_unix_time_from_system()*1000
 	p["sync_flag"]  = 1
 	var query = """
-		INSERT INTO item (name, amount, unit, description, category_id,
+		INSERT INTO item (id, name, amount, unit, description, category_id,
 						  needed, in_cart, last_bought, price_cents, on_sale,
 						  updated_at, sync_flag)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
 	"""
 	var params = [
+		p.get("id", ""),
 		p.get("name", ""),
 		p.get("amount", 0.0),
 		p.get("unit", ""),
@@ -106,9 +138,9 @@ func insert_item(p: Dictionary) -> int:
 	]
 	var success = _db.query_with_bindings(query, params)
 	if success:
-		return int(_db.get_last_insert_rowid())
+		return p["id"]
 	push_error("Insert item failed")
-	return -1
+	return ""
 
 
 func update_item(p: Dictionary) -> void:
@@ -134,44 +166,26 @@ func update_item(p: Dictionary) -> void:
 		p.get("on_sale", false),
 		p["updated_at"],
 		p["sync_flag"],
-		p.get("id", -1)
+		p.get("id", "")
 	]
 	var success = _db.query_with_bindings(query, params)
-	print("DB updated: ", str(p.get("id", -1)), " success: ", success)
+	print("DB updated: ", p.get("id", ""), " success: ", success)
 	if not success:
-		push_error("Failed to update item: " + str(p.get("id", -1)))
+		push_error("Failed to update item: " + p.get("id", ""))
 
-# res://db/database.gd
+
 func upsert_item(p: Dictionary) -> void:
 	p["updated_at"] = Time.get_unix_time_from_system()*1000
 	p["sync_flag"]  = 0          # mark clean immediately
-	var id : Variant = p.get("id", -1)
+	var id : String = p.get("id", "empty?")
 
-	# -- try update first --
-	var affected := 0
-	if id > 0:
-		var sql := """
-			UPDATE item SET
-				name = ?, amount = ?, unit = ?, description = ?, category_id = ?,
-				needed = ?, in_cart = ?, last_bought = ?, price_cents = ?, on_sale = ?,
-				updated_at = ?, sync_flag = ?
-			WHERE id = ?
-		"""
-		var params := [
-			p.get("name",""), p.get("amount",0.0), p.get("unit",""),
-			p.get("description",""), p.get("category_id",-1),
-			p.get("needed",false), p.get("in_cart",false),
-			p.get("last_bought",0), p.get("price_cents",0), p.get("on_sale",false),
-			p["updated_at"], p["sync_flag"], id
-		]
-		_db.query_with_bindings(sql, params)
-		affected = _db.get_last_insert_rowid()   # dummy call to flush
-		affected = _db.query_result.size()       # 0 if row did not exist
-
+	if select_item(id) != []:
+		update_item(p)
+		info("upsert updated id: " + id)
+	else:
 	# -- no existing row → insert --
-	if affected == 0:
-		p.erase("id")   # let DB assign new id
 		insert_item(p)
+		info("upsert inserted id: " + id)
 
 
 func select_items(where_sql := "", params := []) -> Array:
@@ -182,22 +196,30 @@ func select_items(where_sql := "", params := []) -> Array:
 	_db.query_with_bindings(sql, params)
 	return _db.query_result
 
-func delete_item(id: int) -> void:
+
+func select_item(id: String) -> Array:
+	var sql := "SELECT * FROM item WHERE id = ?"
+	_db.query_with_bindings(sql, [id])
+	return _db.query_result
+
+
+func delete_item(id: String) -> void:
 	var success = _db.query_with_bindings(
 		"UPDATE item SET sync_flag = 3, updated_at = unixepoch('subsec')*1000 WHERE id = ?", [id])
 	if not success:
-		push_error("Failed to soft-delete item: " + str(id))
+		push_error("Failed to soft-delete item: " + id)
 
-func toggle_needed(id: int, needed: bool) -> void:
+
+func toggle_needed(id: String, needed: bool) -> void:
 	var success = _db.query_with_bindings(
 		"UPDATE item SET needed = ?, updated_at = unixepoch('subsec')*1000, sync_flag = 1 WHERE id = ?",
 		[needed, id])
 	if not success:
-		push_error("Failed to toggle needed: " + str(id))
+		push_error("Failed to toggle needed: " + id)
 	print("DB toggle_needed id: ", id, " need: ", needed)
 
 
-func toggle_in_cart(id: int) -> void:
+func toggle_in_cart(id: String) -> void:
 	# atomic: flip in_cart, touch updated_at, set last_bought if newly moved into cart
 	var sql = """
 		UPDATE item
@@ -212,7 +234,7 @@ func toggle_in_cart(id: int) -> void:
 	"""
 	var success = _db.query_with_bindings(sql, [id])
 	if not success:
-		push_error("Failed to toggle in_cart: " + str(id))
+		push_error("Failed to toggle in_cart: " + id)
 	print("DB toggle_in_cart, id: ", id)
 
 
@@ -241,16 +263,29 @@ func set_config(key: String, value: String) -> void:
 # ---------- sync helpers ----------
 func select_dirty(table: String) -> Array:
 	var success = _db.query_with_bindings("SELECT * FROM " + table + " WHERE sync_flag != 0 ORDER BY updated_at", [])
-	print("DB.select_dirty: ", success)
 	if success:
-		print("number of dirty rows: ",_db.query_result.size())
-	return _db.query_result if success else []
+		info("number of dirty rows in " + table + " : " + str(_db.query_result.size()))
+		return _db.query_result
+	else: return []
 
-func mark_clean(table: String, id: int) -> void:
+func mark_clean(table: String, id: String) -> void:
 	var success = _db.query_with_bindings("UPDATE %s SET sync_flag = 0 WHERE id = ?" % table, [id])
-	print("mark clean: ", table, " id: ", id)
+	info("mark clean: " + table + " id: " + id)
 	if not success:
-		push_error("Failed to mark clean %s id %d" % [table, id])
+		push_error("Failed to mark clean %s id %s" % [table, id])
+
+
+func mark_all_dirty() -> void:
+	var success = _db.query("UPDATE item SET sync_flag = 1")
+	info("marked all items dirty")
+	if not success:
+		push_error("Failed to mark items dirty")
+		
+	success = _db.query("UPDATE category SET sync_flag = 1")
+	info("marked all categories dirty")
+	if not success:
+		push_error("Failed to mark categories dirty")
+
 
 # res://db/database.gd  (add)
 func get_sync_table() -> String:
