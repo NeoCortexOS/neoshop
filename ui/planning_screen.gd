@@ -5,6 +5,7 @@ class_name PlanningScreen
 @onready var db_label  : Label             = $BackgroundPanel/MainVBox/TopBar/DBName
 @onready var search    : LineEdit          = $BackgroundPanel/MainVBox/FilterBar/Search
 @onready var category  : OptionButton      = $BackgroundPanel/MainVBox/FilterBar/CategoryFilter
+@onready var item_count : Label      = %ItemCount
 @onready var item_list : VBoxContainer     = $BackgroundPanel/MainVBox/Scroll/ItemList
 @onready var add_btn   : Button            = $BackgroundPanel/MainVBox/BottomBar/AddButton
 @onready var settings  : Button            = $BackgroundPanel/MainVBox/BottomBar/SettingsButton
@@ -14,13 +15,16 @@ class_name PlanningScreen
 
 var rows : Dictionary = {}   # int -> ItemRow
 var shopping_mode : bool = false
-
+var categories
+var _saved_scroll : int = 0
 
 func _ready() -> void:
+	print("_ready: " + self.name)
 	db_label.text = "loading"
 	_load_initial_settings()
 	_update_app_title()
-	_populate_category_filter()
+	#_populate_category_filter()
+	_refresh_category_filter()
 	_refresh()
 	search.text_changed.connect(func(_t): _refresh())
 	category.item_selected.connect(func(_t): _refresh())
@@ -31,6 +35,8 @@ func _ready() -> void:
 	
 	%CategoryEditButton.pressed.connect(_on_category_edit_pressed)
 	category_editor.category_saved.connect(_on_categories_changed)
+	
+
 
 
 func _update_app_title() -> void:
@@ -91,7 +97,9 @@ func _refresh_category_filter():
 	
 	# Add categories to dropdown
 	for cat in categories:
-		category.add_item(str(cat["name"]), int(cat["id"]))
+		#print("refresh category: " + str(cat))
+		if(cat["is_deleted"] == 0):
+			category.add_item(str(cat["name"]), int(cat["id"]))
 	
 	# Reset selection to "All"
 	category.selected = 0
@@ -147,14 +155,34 @@ func _refresh() -> void:
 		)
 		
 		# Planning mode: sort by name
+		#items.sort_custom(func(a, b): 
+			#return str(a["name"]).to_lower() < str(b["name"]).to_lower()
+		#)
+		#items.sort_custom(_compare_german)
+		
 		items.sort_custom(func(a, b): 
-			return str(a["name"]).to_lower() < str(b["name"]).to_lower()
+			var str_a = str(a["name"]).to_lower()
+			var str_b = str(b["name"]).to_lower()
+			
+			# Umlaute und ß ersetzen
+			str_a = str_a.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+			str_b = str_b.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+			
+			# Alphabetischen Vergleich durchführen
+			return str_a < str_b
 		)
+		#items.sort_custom(_compare_german)
 
 	# Sync UI
 	var items_count: int = 0
+	var items_needed: int = 0
+	var items_in_cart: int = 0
 	for it in items:
 		items_count += 1
+		if bool(it.get("needed", false)):
+			items_needed += 1
+		if bool(it.get("in_cart", false)):
+			items_in_cart += 1
 		var id : String = it.get(["id"],"")
 		var row : ItemRow = preload("res://ui/item_row.tscn").instantiate() as ItemRow
 		row.setup(it)
@@ -168,28 +196,45 @@ func _refresh() -> void:
 	# Update UI for shopping mode - only hide add button
 	#add_btn.visible = !DB.shopping_mode
 
+	if DB.shopping_mode:
+		item_count.text = str(items_in_cart) + "\n" + str(items_needed)
+	else:
+		item_count.text = str(items_needed) + "\n" +str(items_count)
+
+	
 	print("_refresh items: ", items_count, " shopping_mode = ", DB.shopping_mode)
+
+
+func _compare_german(a: String, b: String) -> bool:
+	var str_a = a.to_lower()
+	var str_b = b.to_lower()
+
+	# Umlaute und ß ersetzen
+	str_a = str_a.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+	str_b = str_b.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+
+	# Alphabetischen Vergleich durchführen
+	print(str_a + " : " + str_b)
+	return str_a < str_b
+
 
 
 func _open_editor(id: String) -> void:
 	print("open_editor: ", id)
-	var sc := %Scroll
-	sc.scroll_vertical = 0
-	sc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	# 1. remember position
+	var sc : ScrollContainer = %Scroll
+	_saved_scroll = sc.scroll_vertical
+
+	# 2. release capture – let the finger/mouse up event finish
+	sc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	await get_tree().process_frame   # one frame = finger released
+
+	# 3. open editor
 	var popup := preload("res://ui/item_editor.tscn").instantiate()
-	popup.item_saved.connect(func():
-		sc.mouse_filter = Control.MOUSE_FILTER_PASS
-		_refresh()
-	)
-	popup.item_canceled.connect(func():
-		sc.mouse_filter = Control.MOUSE_FILTER_PASS
-		_refresh()
-	)
-	popup.item_deleted.connect(func():
-		sc.mouse_filter = Control.MOUSE_FILTER_PASS
-		_refresh()
-	)
+	popup.item_saved.connect(func(): sc.scroll_vertical = _saved_scroll; _close_editor(popup))
+	popup.item_canceled.connect(func(): sc.scroll_vertical = _saved_scroll; _close_editor(popup))
+	popup.item_deleted.connect(func(): sc.scroll_vertical = _saved_scroll; _close_editor(popup))
 	add_child(popup)
 	if id != "-1":
 		popup.edit_item(id)
@@ -198,8 +243,14 @@ func _open_editor(id: String) -> void:
 	popup.show()
 
 
+func _close_editor(popup: Window) -> void:
+	var sc: ScrollContainer = %Scroll
+	sc.mouse_filter = Control.MOUSE_FILTER_PASS
+	popup.queue_free()
+
+
 func _edit_item(id: String) -> void:
-	print("edit_item: ", id)
+	#print("edit_item: ", id)
 	_open_editor(id)
 
 

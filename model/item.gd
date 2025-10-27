@@ -12,6 +12,8 @@ var in_cart: bool
 var last_bought: int
 var price_cents: int
 var on_sale: bool
+var is_deleted: bool
+
 
 func _init(d: Dictionary = {}):
 	id            = d.get("id", "")
@@ -25,6 +27,8 @@ func _init(d: Dictionary = {}):
 	last_bought   = d.get("last_bought", 0)
 	price_cents   = d.get("price_cents", 0)
 	on_sale       = bool(d.get("on_sale", false))
+	is_deleted = bool(d.get("is_deleted", false))
+
 
 func to_dict() -> Dictionary:
 	return {
@@ -38,5 +42,6 @@ func to_dict() -> Dictionary:
 		in_cart = in_cart,
 		last_bought = last_bought,
 		price_cents = price_cents,
-		on_sale = on_sale
+		on_sale = on_sale,
+		is_deleted = is_deleted
 	}

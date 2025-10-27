@@ -7,9 +7,10 @@ signal item_deleted
 var _item_id : String = "-1"                # -1 = new item
 var last_bought_old : float = 0
 var _categories : Array = []
+var is_deleted : bool = false
 
 func _ready() -> void:
-	#print("Item Editor _ready")
+	print("_ready: " + self.name)
 	#show()
 	_populate_categories()
 	%NeedBtn.pressed.connect(_on_need)
@@ -48,7 +49,8 @@ func _populate_categories() -> void:
 	_categories = DB.select_categories()
 	%CategoryOption.clear()
 	for c in _categories:
-		%CategoryOption.add_item(str(c["name"]), int(c["id"]))
+		if(c["is_deleted"] == 0):
+			%CategoryOption.add_item(str(c["name"]), int(c["id"]))
 
 func _clear_fields() -> void:
 	%NameEdit.text = ""
@@ -76,6 +78,12 @@ func _populate_fields(it: Dictionary) -> void:
 			break
 	%NeedBtn.button_pressed = bool(it["needed"])
 	%CartBtn.button_pressed = bool(it["in_cart"])
+	is_deleted = bool(it.get("is_deleted", false))
+	if is_deleted:
+		%DeleteBtn.text = tr("UNDELETE")
+	else:
+		%DeleteBtn.text = tr("DELETE")
+		
 
 
 func _on_save() -> void:
@@ -90,7 +98,8 @@ func _on_save() -> void:
 		in_cart     = %CartBtn.button_pressed,
 		last_bought = last_bought_old,
 		on_sale     = false,
-		sync_flag = 1
+		is_deleted  = is_deleted,
+		sync_flag   = 1
 	}
 
 	if _item_id == "-1":
@@ -120,9 +129,12 @@ func _on_plus():
 
 func _on_delete() -> void:
 	if _item_id != "-1":
-		DB.delete_item(_item_id)
-	emit_signal("item_deleted")
-	queue_free()
+		if is_deleted:
+			DB.undelete_item(_item_id)
+		else:
+			DB.delete_item(_item_id)
+	#emit_signal("item_deleted")
+	#queue_free()
 
 
 func _on_cancel() -> void:

@@ -13,6 +13,7 @@ const SCROLL_THRESHOLD  := 15.0
 # --- state ---
 var shopping_mode : bool = false
 var item_id       : String  = "-1"
+var is_deleted    : bool = false
 var touch_start_time  : float  = 0.0
 var touch_start_pos   : Vector2 = Vector2.ZERO
 var has_moved  : bool = false
@@ -22,6 +23,7 @@ var is_scrolling : bool = false
 # READY
 # --------------------------------------------------
 func _ready() -> void:
+	#print("_ready: " + self.name)
 	## make ItemRow the exclusive touch handler
 	#%ItemRow.mouse_filter = Control.MOUSE_FILTER_PASS
 	#%ItemRow.gui_input.connect(_on_item_row_input)
@@ -92,6 +94,9 @@ func update_from_item(item: Dictionary) -> void:
 	var needed      = bool(item.get("needed",      false))
 	var in_cart     = bool(item.get("in_cart",     false))
 	var price_cents = int(item.get("price_cents",  0))
+	is_deleted      = bool(item.get("is_deleted", false))
+
+	%delPanel.visible = is_deleted
 
 	# --- store in_cart for draw ---
 	%MainLine.set_meta("in_cart", in_cart)
@@ -112,8 +117,15 @@ func update_from_item(item: Dictionary) -> void:
 	if (DB.shopping_mode and in_cart):
 		#print("shopping and in_cart: ", item_id)
 		#%ItemRow.modulate = Color(1, 0.8, 0.8, 0.6)
+		%inCartPanel.modulate = Color(0, 0.75, 0.25, 0.5)
 		%inCartPanel.visible = true
 		#pass #NC
+
+	if (is_deleted):
+		print("deleted item: ", item_id)
+		#%ItemRow.modulate = Color(1, 0.8, 0.8, 0.6)
+		#%inCartPanel.modulate = Color(1.0, 0.0, 0.0, 0.25)
+		#%inCartPanel.visible = true
 
 	# --- amount / need / cart ---
 	var amount_text := str(amount) if amount != 0 else ""
@@ -192,6 +204,8 @@ func _on_long_press_detected() -> void:
 # FEEDBACK ANIMATION  (fixed)
 # --------------------------------------------------
 func _show_tap_feedback() -> void:
+	if OS.get_name() == "Android":
+		Input.vibrate_handheld(100)
 	#print("tap feedback")
 	# detach from layout while scaling
 	var old_h := size_flags_horizontal
@@ -221,6 +235,7 @@ func _update_need_check_appearance() -> void:
 
 
 func toggle_needed(p_item_id: String, needed: bool) -> void:
+	#NC todo: toggle should not need bool, but might return current state
 		#print("toggle_needed id: ", p_item_id, " need: ", needed)
 		if p_item_id != "-1":
 			var items := DB.select_items("id = ?", [p_item_id])
@@ -229,7 +244,8 @@ func toggle_needed(p_item_id: String, needed: bool) -> void:
 	
 	
 func _get_category_name(id: int) -> String:
-	for c in DB.select_categories():
-		if int(c["id"]) == id:
-			return str(c["name"])
-	return ""
+	#for c in DB.select_categories():
+		#if int(c["id"]) == id:
+			#return str(c["name"])
+	#return ""
+	return(DB.catname.get(id, "empty id: " + str(id)))

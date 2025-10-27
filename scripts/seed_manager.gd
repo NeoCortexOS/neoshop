@@ -77,7 +77,8 @@ func _seed_async(dialog: AcceptDialog, label: Label, progress: ProgressBar) -> v
 	emit_signal("seed_completed", items_added, categories_added)
 	
 	# Return to planning screen
-	get_tree().change_scene_to_file("res://ui/PlanningScreen.tscn")
+	#get_tree().change_scene_to_file("res://ui/PlanningScreen.tscn")
+	get_tree().change_scene_to_file("res://ui/planning_screen.tscn")
 
 func _add_categories() -> int:
 	var categories = ["Fruits", "Vegetables", "Dairy", "Meat", "Bakery", "Beverages", "Snacks", "Household"]

@@ -8,6 +8,7 @@ var _current := "en"
 var _strings := {}
 
 func _ready():
+	print("_ready: " + self.name)
 	_load_locale("en")
 
 func set_locale(code: String) -> void:

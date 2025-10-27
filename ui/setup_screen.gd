@@ -4,6 +4,7 @@ extends Control
 @onready var language_option: OptionButton = %LanguageOption
 
 func _ready() -> void:
+	print("_ready: " + self.name)
 	## translate UI
 	#%TitleLabel.text      = tr("SETUP_TITLE")
 	#%ThemeLabel.text      = tr("THEME")

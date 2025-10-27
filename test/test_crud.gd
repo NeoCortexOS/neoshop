@@ -4,6 +4,7 @@ const DB := preload("res://db/database.gd")   # the singleton we just fixed
 var db: SQLite  # local instance for the in-memory test
 
 func _ready():
+	print("_ready: " + self.name)
 	# 1. create an in-memory DB
 	db = SQLite.new()
 	db.path = ":memory:"

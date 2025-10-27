@@ -25,6 +25,10 @@ BackupManager="*res://scripts/backup_manager.gd"
 LocaleHelper="*res://scripts/locale_helper.gd"
 P2P="*res://scripts/p2p_manager.gd"
 
+[debug]
+
+gdscript/warnings/integer_division=0
+
 [display]
 
 window/size/viewport_width=720
@@ -32,7 +36,7 @@ window/size/viewport_height=1280
 window/size/initial_position_type=3
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/handheld/orientation=6
+window/handheld/orientation=1
 window/ios/hide_home_indicator=false
 window/ios/hide_status_bar=false
 

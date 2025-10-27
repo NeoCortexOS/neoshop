@@ -25,10 +25,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
 
 [node name="Panel" type="Panel" parent="BackgroundPanel"]
 layout_mode = 2
@@ -81,13 +79,18 @@ icon = ExtResource("2_ylpv7")
 icon_alignment = 1
 expand_icon = true
 
+[node name="ItemCount" type="Label" parent="BackgroundPanel/MainVBox/FilterBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "000
+0000"
+horizontal_alignment = 1
+
 [node name="Scroll" type="ScrollContainer" parent="BackgroundPanel/MainVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 follow_focus = true
-horizontal_scroll_mode = 0
-vertical_scroll_mode = 2
 
 [node name="ItemList" type="VBoxContainer" parent="BackgroundPanel/MainVBox/Scroll"]
 layout_mode = 2
@@ -95,40 +98,42 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="BottomBar" type="HBoxContainer" parent="BackgroundPanel/MainVBox"]
-custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_vertical = 8
 alignment = 1
 
 [node name="AddButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(100, 100)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 icon = ExtResource("3_pgv0f")
 icon_alignment = 1
+expand_icon = true
 
 [node name="spacer" type="Control" parent="BackgroundPanel/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 
 [node name="SettingsButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 icon = ExtResource("4_2w63m")
+expand_icon = true
 
 [node name="ToolsButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 icon = ExtResource("5_ylpv7")
+expand_icon = true
 
 [node name="spacer2" type="Control" parent="BackgroundPanel/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 
 [node name="ToggleShoppingModeButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 icon = ExtResource("5_pgv0f")
+expand_icon = true
 
 [node name="CategoryEditor" parent="BackgroundPanel" instance=ExtResource("3_467qh")]
 unique_name_in_owner = true
-position = Vector2i(0, 36)

@@ -1,7 +1,7 @@
 # res://db/migration.gd
 extends Node
 
-const CURRENT_VERSION = 2
+const CURRENT_VERSION = 3
 
 func check_and_migrate(db) -> bool:
 	var current_version = _get_schema_version(db)
@@ -43,12 +43,12 @@ func _perform_migration(db, from_version: int) -> bool:
 				print("DB migration to 2")
 				_update_version(db, 2)
 				current = 2
-			#2:
-				#if not _migrate_v2_to_v3(db):
-					#return false
-				#print("DB migration to 3")
-				#_update_version(db, 3)
-				#current = 3
+			2:
+				if not _migrate_v2_to_v3(db):
+					return false
+				print("DB migration to 3")
+				_update_version(db, 3)
+				current = 3
 			_:
 				break
 	
@@ -138,4 +138,26 @@ func _migrate_v1_to_v2(db) -> bool:
 	for sql in ddl:
 		if not db.query(sql):
 			push_error("Migration v1→v2 failed: " + sql); return false
+	
+	# inside _migrate_v1_to_v2, last step
+	db.query_with_bindings(
+		"INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+		["purge_deleted_after_days", "3"]
+	)
+	db.query_with_bindings(
+		"INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+		["last_purge_ts", "0"]
+	)
+	return true
+
+
+func _migrate_v2_to_v3(db) -> bool:
+	# ---- add column ----
+	if not db.query("ALTER TABLE category ADD COLUMN is_deleted INTEGER DEFAULT 0"):
+		return false
+	if not db.query("ALTER TABLE item    ADD COLUMN is_deleted INTEGER DEFAULT 0"):
+		return false
+	# ---- move soft-delete flag ----
+	db.query("UPDATE category SET is_deleted = 1, sync_flag = 0 WHERE sync_flag = 3")
+	db.query("UPDATE item    SET is_deleted = 1, sync_flag = 0 WHERE sync_flag = 3")
 	return true

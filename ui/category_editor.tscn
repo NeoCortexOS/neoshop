@@ -1,9 +1,10 @@
 [gd_scene load_steps=2 format=3 uid="uid://b0r41dxaybeu8"]
 
-[ext_resource type="Script" uid="uid://fai8tjhqou1d" path="res://ui/category_editor.gd" id="1_8x7k2"]
+[ext_resource type="Script" uid="uid://cvi6jtyrsb5rg" path="res://ui/category_editor.gd" id="1_8x7k2"]
 
 [node name="CategoryEditor" type="ConfirmationDialog"]
 title = "Manage Categories"
+position = Vector2i(0, 36)
 size = Vector2i(450, 500)
 min_size = Vector2i(450, 400)
 content_scale_mode = 1
@@ -15,7 +16,7 @@ script = ExtResource("1_8x7k2")
 offset_left = 8.0
 offset_top = 8.0
 offset_right = 442.0
-offset_bottom = 351.0
+offset_bottom = 451.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 anchors_preset = 10
@@ -23,7 +24,7 @@ anchor_right = 1.0
 offset_left = 8.0
 offset_top = 8.0
 offset_right = -8.0
-offset_bottom = 351.0
+offset_bottom = 451.0
 grow_horizontal = 2
 size_flags_horizontal = 3
 size_flags_vertical = 2
@@ -34,13 +35,13 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 follow_focus = true
-horizontal_scroll_mode = 0
-vertical_scroll_mode = 2
+draw_focus_border = true
 
 [node name="CategoriesContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 8
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer"]

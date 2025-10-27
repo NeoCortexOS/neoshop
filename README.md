@@ -1,14 +1,14 @@
 # Neoshop – Offline-first shopping list
 
 Godot 4.4.1 + GDScript + SQLite 4.5  
-Primary targets: Android, Web, Linux, Windows  
+Primary targets: Android, Linux, Windows, web  
 License: MIT, most icons are based upon https://github.com/googlefonts/noto-emoji  
 
 ---
 
 ## Scope
 Single-household shopping list.  
-Works fully offline; optional self-hosted sync (M7) for multi-user households.  
+Works fully offline; p2p sync on LAN (M7) for multi-user households.  
 
 ---
 
@@ -24,7 +24,7 @@ And one "discovery" really turned out to be a game changer: learning how to put 
 For this I created a "Godot expert" prompt as well as a script to collect all the info needed to start a fresh chat while giving it all the context it needs.  
 
 As I believe in the power of FOSS I put this all on a public github repository.  
-My knowledge about Godot is very limited, so do not expect any wizardry here. Any comments to improve the quality are welcome, I just can't promise to turn this into a fully working open source project with pull requests and such, as I have no experience with such things.  
+My knowledge about Godot is limited, so do not expect any wizardry here. Any comments to improve the quality are welcome, I just can't promise to turn this into a fully working open source project with pull requests and such, as I have no experience with such things.  
 
 I am trying to show the main steps of the progress by committing the actual state of my project as "we" keep developing it.  
 
@@ -73,6 +73,11 @@ Date: 2025-09-18
 ##  Optional Advanced Tier
 - AES-256 family-shared key (opt-in).  
 
+### M8 – 2025-10-27
+- category sync with soft-delete support.  
+- Deleted rows visible (red tint) and toggle-able in editors.  
+- Scroll offset preserved on long-press edit.  
+- Automatic purge of soft-deleted rows after 3 days.
 
 ---
 
@@ -80,7 +85,7 @@ Date: 2025-09-18
 
 | Milestone | Focus |
 |-----------|-------|
-| M8 | Multi-table sync (categories, shops), Cancel / progress UI |
+| M8 | Multi-table sync (categories, shops), handling of deleted records |
 | M9 | shop specific ordering of categories, handling on-sale price|
 | M10 | tbd... |
 

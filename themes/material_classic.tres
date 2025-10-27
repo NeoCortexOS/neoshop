@@ -1,6 +1,16 @@
-[gd_resource type="Theme" load_steps=2 format=3 uid="uid://bi0naj1l5nkrg"]
+[gd_resource type="Theme" load_steps=4 format=3 uid="uid://bi0naj1l5nkrg"]
 
 [ext_resource type="StyleBox" uid="uid://h1u1qp3g1bfj" path="res://themes/BackgroundPanelDark.tres" id="1_t84pm"]
+[ext_resource type="StyleBox" uid="uid://dce802bwaaakp" path="res://themes/vbox_scroll.tres" id="2_pdln1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pdln1"]
+content_margin_left = 50.0
+content_margin_top = 25.0
+content_margin_bottom = 25.0
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [resource]
 default_font_size = 32
@@ -20,3 +30,5 @@ LineEdit/colors/font_selected_color = Color(0, 0, 0, 1)
 LineEdit/colors/selection_color = Color(0.2, 0.4, 0.7, 0.6)
 LineEdit/font_sizes/font_size = 32
 Panel/styles/panel = ExtResource("1_t84pm")
+VScrollBar/styles/grabber = SubResource("StyleBoxFlat_pdln1")
+VScrollBar/styles/scroll = ExtResource("2_pdln1")

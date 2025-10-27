@@ -5,6 +5,9 @@ var _db: SQLite
 var db_path := "user://neoshop.db"
 #var _migration: Migration
 var shopping_mode : bool = false
+var cats : Array = []
+var catname : Dictionary = {}
+
 
 signal info_message(text: String)      # forward to UI
 
@@ -17,6 +20,7 @@ func info(msg: String) -> void:
 
 
 func _ready():
+	print("_ready: " + self.name)
 	_db = SQLite.new()
 	_db.path = db_path
 	#_db.verbosity_level = SQLite.VERBOSE
@@ -39,6 +43,11 @@ func _ready():
 	print("Database path: ", _db.path)
 	print("Directory exists: ", DirAccess.dir_exists_absolute(_db.path.get_base_dir()))
 	
+	if int(get_config("last_purge_ts", "0")) < Time.get_unix_time_from_system() - 3600:
+		purge_old_deleted()
+	else:
+		info(get_config("last_purge_ts", "0") +" - "+ str(Time.get_unix_time_from_system() - 3600))
+	
 	TranslationServer.set_locale(DB.get_config("language", "en"))
 
 
@@ -50,7 +59,7 @@ func _table_exists(table:String) -> bool:
 
 # ---------- generic dirty mark ----------
 func _touch(table: String, id: String) -> void:
-	var sql = "UPDATE %s SET updated_at = (unixepoch('subsec')*1000), sync_flag = 1 WHERE id = ?" % table
+	var sql = "UPDATE %s SET updated_at = (unixepoch('subsec')*1000), sync_flag = 1 WHERE id = ? AND sync_flag != 3" % table
 	var success = _db.query_with_bindings(sql, [id])
 	if not success:
 		push_error("Failed to touch %s id %s" % [table, id])
@@ -61,16 +70,16 @@ func _touch(table: String, id: String) -> void:
 # --------------------------------------------------------------
 func insert_category(cat_name: String) -> int:
 	var success = _db.query_with_bindings(
-		"INSERT INTO category(name,updated_at,sync_flag) VALUES (?,unixepoch('subsec')*1000,1)", [cat_name])
+		"INSERT INTO category(name,updated_at,sync_flag,is_deleted) VALUES (?,unixepoch('subsec')*1000,1,0)", [cat_name])
 	if not success:
 		push_error("Failed to insert category: " + cat_name)
 		return -1
 	return int(_db.get_last_insert_rowid())
 
 
-func update_category(id: int, cat_name: String) -> bool:
+func update_category(id: int, cat_name: String, is_deleted: bool) -> bool:
 	var success = _db.query_with_bindings(
-		"UPDATE category SET name = ?, updated_at = unixepoch('subsec')*1000, sync_flag = 1 WHERE id = ?", [cat_name, id])
+		"UPDATE category SET name = ?, updated_at = unixepoch('subsec')*1000, sync_flag = 1, is_deleted = ? WHERE id = ?", [cat_name, is_deleted, id])
 	# the following test for success will likely never fail as update does not return failure
 	if not success:
 		push_error("Failed to update category: " + str(id))
@@ -78,28 +87,31 @@ func update_category(id: int, cat_name: String) -> bool:
 	else: return true
 
 
-func upsert_category(id: int, cat_name: String) -> void:
-	if select_category(id) != []:
-		update_category(id, cat_name)
-		mark_clean("category", str(id))
-		info("upsert category updated id: " + str(id))
+func upsert_category(id: int, cat_name: String, is_deleted: bool) -> void:
+	# exists?
+	var rows := select_category(id)
+	if rows.is_empty():
+		# insert with **host id**
+		_db.query_with_bindings(
+			"INSERT INTO category(id,name,updated_at,sync_flag,is_deleted) VALUES (?,?,unixepoch('subsec')*1000,1,0)",
+			[id, cat_name]
+		)
 	else:
-	# -- no existing row → insert --
-		insert_category(cat_name)
-		info("upsert category inserted id: " + str(id))
+		update_category(id, cat_name, is_deleted)
 
 
 func delete_category(id: int) -> void:
-	# soft delete
-	var success = _db.query_with_bindings(
-		"UPDATE category SET sync_flag = 3, updated_at = unixepoch('subsec')*1000 WHERE id = ?", [id])
-	if not success:
-		push_error("Failed to soft-delete category: " + str(id))
+	_mark_soft_deleted("category", str(id))
 
 
 func select_categories() -> Array:
-	_db.query("SELECT * FROM category ORDER BY name")
-	return _db.query_result
+	_db.query("SELECT * FROM category ORDER BY name COLLATE NOCASE")
+	cats = _db.query_result
+	print("select_categories")
+	# Add categories to dropdown
+	for cat in cats:
+		catname[cat["id"]] = cat["name"]
+	return cats
 
 
 func select_category(id: int) -> Array:
@@ -150,7 +162,7 @@ func update_item(p: Dictionary) -> void:
 		UPDATE item SET
 			name = ?, amount = ?, unit = ?, description = ?, category_id = ?,
 			needed = ?, in_cart = ?, last_bought = ?, price_cents = ?, on_sale = ?,
-			updated_at = ?, sync_flag = ?
+			updated_at = ?, sync_flag = ?, is_deleted = ?
 		WHERE id = ?
 	"""
 	var params = [
@@ -166,6 +178,7 @@ func update_item(p: Dictionary) -> void:
 		p.get("on_sale", false),
 		p["updated_at"],
 		p["sync_flag"],
+		p.get("is_deleted", false),
 		p.get("id", "")
 	]
 	var success = _db.query_with_bindings(query, params)
@@ -204,10 +217,14 @@ func select_item(id: String) -> Array:
 
 
 func delete_item(id: String) -> void:
+	_mark_soft_deleted("item", id)
+
+
+func undelete_item(id: String) -> void:
 	var success = _db.query_with_bindings(
-		"UPDATE item SET sync_flag = 3, updated_at = unixepoch('subsec')*1000 WHERE id = ?", [id])
+		"UPDATE item SET sync_flag = 1, updated_at = unixepoch('subsec')*1000 WHERE id = ?", [id])
 	if not success:
-		push_error("Failed to soft-delete item: " + id)
+		push_error("Failed to soft-undelete item: " + id)
 
 
 func toggle_needed(id: String, needed: bool) -> void:
@@ -262,15 +279,17 @@ func set_config(key: String, value: String) -> void:
 
 # ---------- sync helpers ----------
 func select_dirty(table: String) -> Array:
-	var success = _db.query_with_bindings("SELECT * FROM " + table + " WHERE sync_flag != 0 ORDER BY updated_at", [])
+	var success = _db.query_with_bindings("SELECT * FROM " + table + " WHERE sync_flag != 0 OR is_deleted != 0 ORDER BY updated_at", [])
 	if success:
 		info("number of dirty rows in " + table + " : " + str(_db.query_result.size()))
+		#info(str(_db.query_result))
 		return _db.query_result
 	else: return []
 
+
 func mark_clean(table: String, id: String) -> void:
 	var success = _db.query_with_bindings("UPDATE %s SET sync_flag = 0 WHERE id = ?" % table, [id])
-	info("mark clean: " + table + " id: " + id)
+	#info("mark clean: " + table + " id: " + id)
 	if not success:
 		push_error("Failed to mark clean %s id %s" % [table, id])
 
@@ -287,6 +306,30 @@ func mark_all_dirty() -> void:
 		push_error("Failed to mark categories dirty")
 
 
+# never set raw flags outside these helpers
+func _mark_dirty(table: String, id: String) -> void:
+	_db.query_with_bindings(
+		"UPDATE %s SET updated_at = (unixepoch('subsec')*1000), sync_flag = 1 WHERE id = ?" % table, [id]
+	)
+
+
+func _mark_soft_deleted(table: String, id: String) -> void:
+	_db.query_with_bindings(
+		"UPDATE %s SET updated_at = (unixepoch('subsec')*1000), is_deleted = 1, sync_flag = 1 WHERE id = ?" % table, [id]
+	)
+
+
+func _mark_undeleted(table: String, id: String) -> void:
+	_db.query_with_bindings(
+		"UPDATE %s SET updated_at = (unixepoch('subsec')*1000), is_deleted = 0, sync_flag = 1 WHERE id = ?" % table, [id]
+	)
+
+#func _select_visible(table: String, where := "", params := []) -> Array:
+	#var sql := "SELECT * FROM " + table + " WHERE is_deleted = 0"
+	#if not where.is_empty(): sql += " AND (" + where + ")"
+	#return _db.query_with_bindings(sql, params) if _db.query_with_bindings(sql, params) else []
+
+
 # res://db/database.gd  (add)
 func get_sync_table() -> String:
 	# called by P2P to show which table is syncing
@@ -297,3 +340,20 @@ func clear_databases() -> void:
 	DB._db.query("DELETE FROM item")
 	DB._db.query("DELETE FROM category")
 	DB._db.query("COMMIT")
+
+
+func purge_old_deleted() -> void:
+	var days := int(get_config("purge_deleted_after_days", "3"))
+	var cutoff := (Time.get_unix_time_from_system() - days * 86400) * 1000  # ms
+	# categories
+	info("days: " + str(days) + " " + str(cutoff))
+	_db.query_with_bindings(
+		"DELETE FROM category WHERE is_deleted = 1 AND updated_at < ?",
+		[cutoff]
+	)
+	# items
+	_db.query_with_bindings(
+		"DELETE FROM item WHERE is_deleted = 1 AND updated_at < ?",
+		[cutoff]
+	)
+	set_config("last_purge_ts", str(Time.get_unix_time_from_system()))

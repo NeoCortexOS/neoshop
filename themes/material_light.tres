@@ -1,7 +1,8 @@
-[gd_resource type="Theme" load_steps=10 format=3 uid="uid://cwgnyddil6yio"]
+[gd_resource type="Theme" load_steps=11 format=3 uid="uid://cwgnyddil6yio"]
 
 [ext_resource type="StyleBox" uid="uid://mqspktfg1nec" path="res://themes/button_light_hover.tres" id="1_m7305"]
 [ext_resource type="StyleBox" uid="uid://cl0kxxb4sebok" path="res://themes/button_light_normal.tres" id="1_mnk14"]
+[ext_resource type="StyleBox" uid="uid://bdokauyvebhbi" path="res://themes/vbox_scroll_light.tres" id="3_5gonl"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o7fjf"]
 content_margin_left = 6.0
@@ -154,6 +155,7 @@ OptionButton/styles/normal = ExtResource("1_mnk14")
 Panel/styles/panel = SubResource("StyleBoxFlat_1x3ue")
 PanelContainer/styles/panel = SubResource("StyleBoxFlat_t835k")
 PopupDialog/styles/panel = SubResource("StyleBoxFlat_5gonl")
+VScrollBar/styles/scroll = ExtResource("3_5gonl")
 Window/colors/title_color = Color(0.225, 0.225, 0.225, 1)
 Window/styles/embedded_border = SubResource("StyleBoxFlat_m7305")
 Window/styles/embedded_unfocused_border = SubResource("StyleBoxFlat_m7305")

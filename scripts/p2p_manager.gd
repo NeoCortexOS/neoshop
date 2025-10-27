@@ -2,7 +2,7 @@
 extends Node
 class_name P2PManager
 
-enum State { IDLE, BROADCASTING, CONNECTED_HOST, SEARCHING, JOINING, SYNCING, DONE, SHUTTING_DOWN }
+enum State { IDLE, BROADCASTING, CONNECTED_HOST, SEARCHING, JOINING, SYNCING, SENDING_CAT, DONE, SHUTTING_DOWN }
 var ws_state_names = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"]
 
 signal state_changed(new_state: State)
@@ -41,7 +41,12 @@ func info(msg: String) -> void:
 
 # -------------- life-cycle --------------
 func _ready() -> void:
-	my_name = OS.get_unique_id()
+	print("_ready: " + self.name)
+	# NC todo: insert name into config/setup
+	if OS.get_name() == "Web":
+		my_name="Web"
+	else:
+		my_name = OS.get_unique_id()
 	_start_udp()          # bind only, no broadcast
 
 
@@ -111,8 +116,13 @@ func _process(_dt) -> void:
 
 
 func _poll_udp() -> void:
-	if not udp_peer or udp_peer.get_available_packet_count() == 0: return
+	if not udp_peer or udp_peer.get_available_packet_count() < 1: return
+	print(udp_peer.get_available_packet_count())
 	var data := udp_peer.get_packet().get_string_from_utf8()
+	print(str(data))
+	if !data:
+		print("empty data")
+		return
 	var msg : Variant = JSON.parse_string(data)
 	if msg and msg.get("magic", "") == MAGIC and msg.get("name", "") != my_name:
 		var exists := false
@@ -162,9 +172,9 @@ func _poll_host_send() -> void:
 			call_deferred("_send_pages_async")
 		_: _idle_reset()
 
+
 # res://scripts/p2p_manager.gd
 func _send_pages_async() -> void:
-
 	# ---------- wait for OPEN (max 3 s) ----------
 	var t1 := Time.get_ticks_msec()
 	while ws_server.get_ready_state() != WebSocketPeer.STATE_OPEN and Time.get_ticks_msec() - t1 < 3000:
@@ -176,20 +186,32 @@ func _send_pages_async() -> void:
 		return
 	# ---------- now safe to send ----------
 
-	# ---------- 1.  categories ----------
+	# ---------- 1. categories ----------
 	var dirty_cat := DB.select_dirty("category")
 	if dirty_cat.size() > 0:
 		info("Host sending %d categories" % dirty_cat.size())
+		var i = 0
 		for cat in dirty_cat:
-			ws_server.send_text(JSON.stringify({"table":"category","row":cat}))
-			DB.mark_clean("category", str(cat.id))
-		# wait for global ACK (client echoes {"cat_ack":true})
+			if i == dirty_cat.size() - 1:
+				ws_server.send_text(JSON.stringify({"table":"category","row":cat,"last":true}))
+			else:
+				ws_server.send_text(JSON.stringify({"table":"category","row":cat,"last":false}))
+			i += 1
+		info("sent " + str(i) + " categories")
+		# wait for global ACK
 		var t0 := Time.get_ticks_msec()
 		while true:
 			ws_server.poll()
-			if ws_server.get_available_packet_count() > 0:
+			var n := ws_server.get_available_packet_count()
+			if n > 0:
+			#if ws_server.get_available_packet_count() > 0:
 				var ack := ws_server.get_packet().get_string_from_utf8()
-				if ack == "{\"cat_ack\":true}": break
+				#info("cat ack: " + ack)
+				if ack == "{\"cat_ack\":true}":
+					for cat in dirty_cat:
+						DB.mark_clean("category", str(cat.id))
+						#info("category marked clean: " + str(cat.id))
+					break
 			if Time.get_ticks_msec() - t0 > 2000: break
 			OS.delay_msec(10)
 
@@ -197,16 +219,18 @@ func _send_pages_async() -> void:
 	var dirty := DB.select_dirty("item")
 
 	var total := dirty.size()
+	#warning-ignore:integer_division
 	var pages : int = (total - 1) / PAGE_SIZE + 1
 	info("Host sending %d rows (%d pages)" % [total, pages])
 
 	for i in range(0, total, PAGE_SIZE):
 		if not is_instance_valid(ws_server) or ws_server.get_ready_state() != WebSocketPeer.STATE_OPEN:
-			info("Socket gone during page %d" % (i/PAGE_SIZE))
+			info("Socket gone during page %d" % int(i/PAGE_SIZE))
 			break
 		var page := dirty.slice(i, i + PAGE_SIZE)
-		var pkt := JSON.stringify({"page": page, "index": i / PAGE_SIZE, "last": i + PAGE_SIZE >= total})
+		var pkt := JSON.stringify({"page": page, "index": int(i / PAGE_SIZE), "last": i + PAGE_SIZE >= total})
 		ws_server.send_text(pkt)
+		#info("sent pkt: " + pkt)
 		# _send_pages_async  (immediately after send_text)
 		info("Page %d sent  ws_server.state=%s  available=%d" % [i/PAGE_SIZE, ws_state_names[ws_server.get_ready_state()], ws_server.get_available_packet_count()])
 
@@ -243,11 +267,41 @@ func _send_pages_async() -> void:
 		for row in page:
 			DB.mark_clean("item", str(row.id))
 
+	# --- all pages done → wait for client category upload (max 1 s) ---
+	info("Host waiting for client category upload")
+	var t2 := Time.get_ticks_msec()
+	while ws_server.get_ready_state() == WebSocketPeer.STATE_OPEN and Time.get_ticks_msec() - t2 < 1000:
+		ws_server.poll()
+		while ws_server.get_available_packet_count() > 0:
+			var pkt := ws_server.get_packet().get_string_from_utf8()
+			var data: Variant = JSON.parse_string(pkt)
+			if data is Dictionary and data.get("table") == "category":
+				_apply_category_row(data.row)
+		# send ACK once per batch
+		ws_server.send_text(JSON.stringify({"cat_ack":true}))
+		OS.delay_msec(50)
+	# final close
+	#ws_server.close(1000, "host-done")
+	
 	# all pages done
 	if is_instance_valid(ws_server) and ws_server.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		ws_server.close(1000, "host-done")
 	set_process(true)
 	_idle_reset()
+
+
+func _apply_category_row(row: Dictionary) -> void:
+	var local := DB.select_category(int(row.id))
+	var use_client := true
+	if not local.is_empty():
+		var local_time := int(local[0].updated_at)
+		var cli_time   := int(row.updated_at)
+		if local_time > cli_time: use_client = false
+	if use_client:
+		DB._db.query_with_bindings(
+			"INSERT OR REPLACE INTO category(id,name,updated_at,sync_flag,is_deleted) VALUES (?,?,?,?,?)",
+			[row.id, row.name, row.updated_at, 0, row.get("is_deleted",0)]
+		)
 
 
 func _poll_client_recv() -> void:
@@ -267,13 +321,35 @@ func _poll_client_recv() -> void:
 				var pkt := ws_client.get_packet().get_string_from_utf8()
 				var data: Variant = JSON.parse_string(pkt)
 
+				## ---- category row ----
+				#if data is Dictionary and data.get("table") == "category":
+					#DB.upsert_category(data.row["id"],data.row["name"])
+					#if data.get("last", false):
+						#ws_client.send_text(JSON.stringify({"cat_ack":true}))
+					#continue
+
 				# ---- category row ----
 				if data is Dictionary and data.get("table") == "category":
-					DB.upsert_category(data.row["id"],data.row["name"])
 					if data.get("last", false):
 						ws_client.send_text(JSON.stringify({"cat_ack":true}))
+						info("cat_ack sent")
+						#continue
+					var row := Dictionary(data.row)
+					var local := DB.select_category(int(row.id))
+					var use_host := true
+					if not local.is_empty():
+						var local_time := int(local[0].updated_at)
+						var host_time  := int(row.updated_at)
+						if local_time > host_time:
+							use_host = false
+					if use_host:
+						# insert or replace with host values
+						DB._db.query_with_bindings(
+							"INSERT OR REPLACE INTO category(id,name,updated_at,sync_flag,is_deleted) VALUES (?,?,?,?,?)",
+							[row.id, row.name, row.updated_at, 0, row.is_deleted]
+						)
 					continue
-
+					
 				# --- paginated protocol ---
 				if data is Dictionary and data.has("page"):
 					for row in data.page:
@@ -296,9 +372,16 @@ func _poll_client_recv() -> void:
 					# final page?
 					if data.get("last", false):
 						info("Client received last page")
-						await get_tree().create_timer(0.2).timeout   # 200 ms TCP drain
-						ws_client.close()
 						_mark_clean_and_refresh()
+						# ----------  NEW: now send our own categories ----------
+						if DB.select_dirty("category").size() > 0:
+							_set_state(State.SENDING_CAT)
+							set_process(false)
+							call_deferred("_send_categories_to_host")
+							return
+						# ----------  else done ----------
+						await get_tree().create_timer(0.2).timeout
+						ws_client.close()
 						_idle_reset()
 					return
 
@@ -318,6 +401,26 @@ func _poll_client_recv() -> void:
 			info("Client socket closed or error")
 			_idle_reset()
 
+
+func _send_categories_to_host() -> void:
+	var dirty_cat := DB.select_dirty("category")
+	info("Client sending %d categories to host" % dirty_cat.size())
+	for cat in dirty_cat:
+		ws_client.send_text(JSON.stringify({"table":"category","row":cat}))
+	# wait for host ACK
+	var t0 := Time.get_ticks_msec()
+	while true:
+		ws_client.poll()
+		if ws_client.get_available_packet_count() > 0:
+			var ack := ws_client.get_packet().get_string_from_utf8()
+			if ack == "{\"cat_ack\":true}": break
+		if Time.get_ticks_msec() - t0 > 3000: push_error("Host cat ACK timeout"); break
+		OS.delay_msec(10)
+	# mark clean only after ACK
+	for cat in dirty_cat:
+		DB.mark_clean("category", str(cat.id))
+	set_process(true)
+	_idle_reset()
 
 func _poll_state_done() -> void:
 	if state == State.DONE:

@@ -29,6 +29,7 @@ func _on_info_message(msg: String) -> void:
 
 
 func _ready() -> void:
+	print("_ready: " + self.name)
 	dirty_btn.pressed.connect(_on_dirty)
 	host_btn.pressed.connect(_on_host)
 	join_btn.pressed.connect(_on_join)
