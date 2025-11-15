@@ -31,7 +31,7 @@ func _on_info_message(msg: String) -> void:
 func _ready() -> void:
 	dirty_btn.pressed.connect(_on_dirty)
 	host_btn.pressed.connect(_on_host)
-	join_btn.pressed.connect(_on_join)
+	join_btn.pressed.connect(_on_join_pressed)
 	list.item_selected.connect(_on_pick_device)
 	export_btn.pressed.connect(_on_export)
 	import_btn.pressed.connect(_on_import)
@@ -57,10 +57,10 @@ func _on_p2p_state(s: P2PManager.State) -> void:
 		P2PManager.State.CONNECTING:
 			status.text = "Connecting…"; status.show()
 			info("CONNECTING")
-		P2PManager.State.SENDING:
+		P2PManager.State.HOST_SENDING:
 			status.text = "Sending data…"; status.show()
 			info("SENDING")
-		P2PManager.State.RECEIVING:
+		P2PManager.State.CLIENT_RECEIVING:
 			status.text = "Receiving data…"; status.show()
 			info("RECEIVING")
 		P2PManager.State.DONE:
@@ -100,7 +100,8 @@ func _on_host() -> void:
 	status.text = "Hosting on port 8090"
 	status.show()
 
-func _on_join() -> void:
+func _on_join_pressed() -> void:
+	P2P._start_udp()
 	list.show()
 	status.text = "Scanning LAN…"
 	status.show()

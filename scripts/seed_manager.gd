@@ -94,14 +94,14 @@ func _add_categories() -> int:
 
 func _add_items() -> int:
 	var items = [
-		{"name": "Apples", "amount": 1, "unit": "kg", "description": "Fresh red apples", "category": "Fruits", "price_cents": 250, "needed": true},
-		{"name": "Milk", "amount": 2, "unit": "L", "description": "Whole milk", "category": "Dairy", "price_cents": 180, "needed": true},
-		{"name": "Bread", "amount": 1, "unit": "loaf", "description": "Whole wheat bread", "category": "Bakery", "price_cents": 220, "needed": true},
-		{"name": "Chicken", "amount": 500, "unit": "g", "description": "Boneless chicken breast", "category": "Meat", "price_cents": 800, "needed": false},
-		{"name": "Eggs", "amount": 12, "unit": "pieces", "description": "Free range eggs", "category": "Dairy", "price_cents": 350, "needed": true},
-		{"name": "Bananas", "amount": 6, "unit": "pieces", "description": "Ripe bananas", "category": "Fruits", "price_cents": 150, "needed": true},
-		{"name": "Tomatoes", "amount": 500, "unit": "g", "description": "Fresh tomatoes", "category": "Vegetables", "price_cents": 200, "needed": true},
-		{"name": "Cheese", "amount": 200, "unit": "g", "description": "Cheddar cheese", "category": "Dairy", "price_cents": 450, "needed": false}
+		{"id": "000001d6-e656-f736-86f7-02d32303235", "name": "Apples", "amount": 1, "unit": "kg", "description": "Fresh red apples", "category": "Fruits", "price_cents": 250, "needed": true},
+		{"id": "000002d6-e656-f736-86f7-02d32303235", "name": "Milk", "amount": 2, "unit": "L", "description": "Whole milk", "category": "Dairy", "price_cents": 180, "needed": true},
+		{"id": "000003d6-e656-f736-86f7-02d32303235", "name": "Bread", "amount": 1, "unit": "loaf", "description": "Whole wheat bread", "category": "Bakery", "price_cents": 220, "needed": true},
+		{"id": "000004d6-e656-f736-86f7-02d32303235", "name": "Chicken", "amount": 500, "unit": "g", "description": "Boneless chicken breast", "category": "Meat", "price_cents": 800, "needed": false},
+		{"id": "000005d6-e656-f736-86f7-02d32303235", "name": "Eggs", "amount": 12, "unit": "pieces", "description": "Free range eggs", "category": "Dairy", "price_cents": 350, "needed": true},
+		{"id": "000006d6-e656-f736-86f7-02d32303235", "name": "Bananas", "amount": 6, "unit": "pieces", "description": "Ripe bananas", "category": "Fruits", "price_cents": 150, "needed": true},
+		{"id": "000007d6-e656-f736-86f7-02d32303235", "name": "Tomatoes", "amount": 500, "unit": "g", "description": "Fresh tomatoes", "category": "Vegetables", "price_cents": 200, "needed": true},
+		{"id": "000008d6-e656-f736-86f7-02d32303235", "name": "Cheese", "amount": 200, "unit": "g", "description": "Cheddar cheese", "category": "Dairy", "price_cents": 450, "needed": false}
 	]
 	
 	var added = 0
@@ -118,6 +118,7 @@ func _add_items() -> int:
 		var category_name = item_data["category"]
 		if categories.has(category_name):
 			var params = {
+				"id": item_data["id"],
 				"name": item_data["name"],
 				"amount": item_data["amount"],
 				"unit": item_data["unit"],

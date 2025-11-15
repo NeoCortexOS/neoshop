@@ -93,7 +93,7 @@ func upsert_category(id: int, cat_name: String, is_deleted: bool) -> void:
 	if rows.is_empty():
 		# insert with **host id**
 		_db.query_with_bindings(
-			"INSERT INTO category(id,name,updated_at,sync_flag,is_deleted) VALUES (?,?,unixepoch('subsec')*1000,1,0)",
+			"INSERT INTO category(id,name,updated_at,sync_flag,is_deleted) VALUES (?,?,unixepoch('subsec')*1000,0,0)",
 			[id, cat_name]
 		)
 	else:
@@ -279,7 +279,7 @@ func set_config(key: String, value: String) -> void:
 
 # ---------- sync helpers ----------
 func select_dirty(table: String) -> Array:
-	var success = _db.query_with_bindings("SELECT * FROM " + table + " WHERE sync_flag != 0 OR is_deleted != 0 ORDER BY updated_at", [])
+	var success = _db.query_with_bindings("SELECT * FROM " + table + " WHERE sync_flag != 0 OR is_deleted != 0 ORDER BY id", [])
 	if success:
 		info("number of dirty rows in " + table + " : " + str(_db.query_result.size()))
 		#info(str(_db.query_result))
