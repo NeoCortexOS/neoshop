@@ -1,12 +1,14 @@
 extends Control
 class_name PlanningScreen
 
+const PB := preload("res://addons/godex_ui_profiler/profile_block.gd")
+
 @onready var top_bar   : HBoxContainer     = $BackgroundPanel/MainVBox/TopBar
 @onready var db_label  : Label             = $BackgroundPanel/MainVBox/TopBar/DBName
 @onready var search    : LineEdit          = $BackgroundPanel/MainVBox/FilterBar/Search
 @onready var category  : OptionButton      = $BackgroundPanel/MainVBox/FilterBar/CategoryFilter
 @onready var item_count : Label      = %ItemCount
-@onready var item_list : VBoxContainer     = $BackgroundPanel/MainVBox/Scroll/ItemList
+@onready var item_list : VBoxContainer     = %ItemList
 @onready var add_btn   : Button            = $BackgroundPanel/MainVBox/BottomBar/AddButton
 @onready var settings  : Button            = $BackgroundPanel/MainVBox/BottomBar/SettingsButton
 @onready var tools     : Button            = $BackgroundPanel/MainVBox/BottomBar/ToolsButton
@@ -17,9 +19,17 @@ var rows : Dictionary = {}   # int -> ItemRow
 var shopping_mode : bool = false
 var categories
 var _saved_scroll : int = 0
+var _search_txt: String = ""          # cached filter state
+
+##
+## ---------- logging ----------
+func info(msg: String):
+	print("[planning_screen] ", msg)
+	#info_message.emit("[P2P] " + msg)
+
 
 func _ready() -> void:
-	print("_ready: " + self.name)
+	info("_ready: " + self.name)
 	db_label.text = "loading"
 	_load_initial_settings()
 	_update_app_title()
@@ -38,7 +48,6 @@ func _ready() -> void:
 	
 
 
-
 func _update_app_title() -> void:
 	var mode = tr("shopping") if DB.shopping_mode else tr("planning")
 	var db_name = DB.get_db_name().replace('.db', '')
@@ -47,6 +56,7 @@ func _update_app_title() -> void:
 
 
 func _populate_category_filter() -> void:
+	info("_populate_category_filter")
 	category.clear()
 	category.add_item("All", -2)
 	for cat in DB.select_categories():
@@ -87,80 +97,16 @@ func _on_seed() -> void:
 
 
 func _refresh_category_filter():
+	info("_refresh_category_filter")
+
 	# Clear existing items except "All"
 	category.clear()
 	category.add_item("All", -2)
 	
 	# Load fresh categories from database
-	var categories = DB.select_categories()
-	categories.sort_custom(func(a, b): return a["name"].to_lower() < b["name"].to_lower())
-	
-	# Add categories to dropdown
-	for cat in categories:
-		#print("refresh category: " + str(cat))
-		if(cat["is_deleted"] == 0):
-			category.add_item(str(cat["name"]), int(cat["id"]))
-	
-	# Reset selection to "All"
-	category.selected = 0
-
-
-func _refresh() -> void:
-	var search_txt : String = search.text.to_lower()
-	var cat_id     : int    = category.get_item_id(category.selected)
-	
-	var items : Array[Dictionary] = DB.select_items()
-	
-	# clear old rows
-	for child in item_list.get_children():
-		if child is ItemRow:
-			child.long_pressed.disconnect(_edit_item)  # Disconnect signal
-		child.queue_free()
-	rows.clear()
-	
-	# Filter based on mode
-	if DB.shopping_mode:
-		# Shopping mode: only needed items
-		items = items.filter(func(it: Dictionary) -> bool:
-			var matches_needed = bool(it.get("needed", false))
-			var matches_search = search_txt.is_empty() or str(it["name"]).to_lower().contains(search_txt)
-			var matches_category = cat_id == -2 or int(it["category_id"]) == cat_id
-			return matches_needed and matches_search and matches_category
-		)
-		
-		# Sort for shopping mode
-		items.sort_custom(func(a, b):
-			var a_in_cart = bool(a.get("in_cart", false))
-			var b_in_cart = bool(b.get("in_cart", false))
-			
-			if a_in_cart != b_in_cart:
-				return !a_in_cart  # False first (not in cart)
-			
-			if !a_in_cart and !b_in_cart:
-				# Both not in cart, sort by category
-				return int(a.get("category_id", 0)) < int(b.get("category_id", 0))
-			
-			# Both in cart, sort by last_bought (newest first)
-			var a_last = int(a.get("last_bought", 0))
-			var b_last = int(b.get("last_bought", 0))
-			return b_last < a_last  # Descending order
-		)
-	else:
-		# Planning mode: regular filtering
-		items = items.filter(func(it: Dictionary) -> bool:
-			var matches : bool = search_txt.is_empty() or str(it["name"]).to_lower().contains(search_txt)
-			if cat_id != -2:
-				matches = matches and int(it["category_id"]) == cat_id
-			return matches
-		)
-		
-		# Planning mode: sort by name
-		#items.sort_custom(func(a, b): 
-			#return str(a["name"]).to_lower() < str(b["name"]).to_lower()
-		#)
-		#items.sort_custom(_compare_german)
-		
-		items.sort_custom(func(a, b): 
+	categories = DB.select_categories()
+	#categories.sort_custom(func(a, b): return a["name"].to_lower() < b["name"].to_lower())
+	categories.sort_custom(func(a, b): 
 			var str_a = str(a["name"]).to_lower()
 			var str_b = str(b["name"]).to_lower()
 			
@@ -170,52 +116,193 @@ func _refresh() -> void:
 			
 			# Alphabetischen Vergleich durchführen
 			return str_a < str_b
-		)
-		#items.sort_custom(_compare_german)
-
-	# Sync UI
-	var items_count: int = 0
-	var items_needed: int = 0
-	var items_in_cart: int = 0
-	for it in items:
-		items_count += 1
-		if bool(it.get("needed", false)):
-			items_needed += 1
-		if bool(it.get("in_cart", false)):
-			items_in_cart += 1
-		var id : String = it.get(["id"],"")
-		var row : ItemRow = preload("res://ui/item_row.tscn").instantiate() as ItemRow
-		row.setup(it)
-		#row.set_shopping_mode(DB.shopping_mode)
-		row.long_pressed.connect(_edit_item)
-		row.needed_changed.connect(DB.toggle_needed)
-		row.in_cart_changed.connect(_on_in_cart_changed)
-		item_list.add_child(row)
-		rows[id] = row
+			)
+	# Add categories to dropdown
+	for cat in categories:
+		#print("refresh category: " + str(cat))
+		if(cat["is_deleted"] == 0):
+			#category.add_item(str(cat["name"]), int(cat["id"]))
+			category.add_item(str(cat["name"]))
 	
-	# Update UI for shopping mode - only hide add button
-	#add_btn.visible = !DB.shopping_mode
+	# Reset selection to "All"
+	category.selected = 0
 
+
+#func _refresh() -> void:
+	#var _prof := PB.ms("PlanningScreen._refresh total")
+	#var search_txt : String = search.text.to_lower()
+	#var cat_id     : int    = category.get_item_id(category.selected)
+	#
+	#var t1 : int = Time.get_ticks_msec()
+	#var items : Array[Dictionary] = DB.select_items()
+	#info ("time spent filling items: " + str(Time.get_ticks_msec() - t1))
+	#
+	## clear old rows
+	#for child in item_list.get_children():
+		#if child is ItemRow:
+			#child.long_pressed.disconnect(_edit_item)  # Disconnect signal
+		#child.queue_free()
+	#rows.clear()
+	#
+	## Filter based on mode
+	#if DB.shopping_mode:
+		## Shopping mode: only needed items
+		#items = items.filter(func(it: Dictionary) -> bool:
+			#var matches_needed = bool(it.get("needed", false))
+			#var matches_search = search_txt.is_empty() or str(it["name"]).to_lower().contains(search_txt)
+			#var matches_category = cat_id == -2 or int(it["category_id"]) == cat_id
+			#return matches_needed and matches_search and matches_category
+		#)
+		#
+		## Sort for shopping mode
+		#items.sort_custom(func(a, b):
+			#var a_in_cart = bool(a.get("in_cart", false))
+			#var b_in_cart = bool(b.get("in_cart", false))
+			#
+			#if a_in_cart != b_in_cart:
+				#return !a_in_cart  # False first (not in cart)
+			#
+			#if !a_in_cart and !b_in_cart:
+				## Both not in cart, sort by category
+				#print(DB.catname[b.get("category_id", 0)])
+				#return DB.catname[a.get("category_id", 0)] < DB.catname[b.get("category_id", 0)]
+			#
+			## Both in cart, sort by last_bought (newest first)
+			#var a_last = int(a.get("last_bought", 0))
+			#var b_last = int(b.get("last_bought", 0))
+			#return b_last < a_last  # Descending order
+		#)
+	#else:
+		## Planning mode: regular filtering
+		#var _prof2 := PB.ms("filter + sort")
+		#items = items.filter(func(it: Dictionary) -> bool:
+			#var matches : bool = search_txt.is_empty() or str(it["name"]).to_lower().contains(search_txt)
+			#if cat_id != -2:
+				#matches = matches and int(it["category_id"]) == cat_id
+			#return matches
+		#)
+		#_prof2.finish()
+		#
+		## Planning mode: sort by name
+		##items.sort_custom(func(a, b): 
+			##return str(a["name"]).to_lower() < str(b["name"]).to_lower()
+		##)
+		##items.sort_custom(_compare_german)
+		#
+		#items.sort_custom(func(a, b): 
+			#var str_a = str(a["name"]).to_lower()
+			#var str_b = str(b["name"]).to_lower()
+			#
+			## Umlaute und ß ersetzen
+			#str_a = str_a.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+			#str_b = str_b.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+			#
+			## Alphabetischen Vergleich durchführen
+			#return str_a < str_b
+		#)
+		##items.sort_custom(compare_german)
+		##print("planning mode")
+		##info(str(compare_german("aaa","aab")))
+#
+	## Sync UI
+	#var items_count: int = 0
+	#var items_needed: int = 0
+	#var items_in_cart: int = 0
+	#var _prof3 := PB.ms("instantiate rows")
+	#var sum_ms : float = 0
+	#var startframe := Engine.get_frames_drawn()
+	#for it in items:
+		#items_count += 1
+		#if bool(it.get("needed", false)):
+			#items_needed += 1
+		#if bool(it.get("in_cart", false)):
+			#items_in_cart += 1
+		#var id : String = it.get(["id"],"")
+		#var row : ItemRow = preload("res://ui/item_row.tscn").instantiate() as ItemRow
+		#row.setup(it)
+		##row.set_shopping_mode(DB.shopping_mode)
+		##row.long_pressed.connect(_edit_item.bind(id))
+		#row.long_pressed.connect(_edit_item)
+		#row.needed_changed.connect(DB.toggle_needed)
+		#row.in_cart_changed.connect(_on_in_cart_changed)
+		#var _prof4 := PB.ms("row setup")
+		#item_list.add_child(row)
+		#rows[id] = row
+		#sum_ms += _prof4.finish()
+	#_prof3.finish()
+	#print("frames drawn: " + str(Engine.get_frames_drawn()- startframe))
+	#info("items ms: " + str(sum_ms))
+	#
+	## Update UI for shopping mode - only hide add button
+	##add_btn.visible = !DB.shopping_mode
+#
+	#if DB.shopping_mode:
+		#item_count.text = str(items_in_cart) + "\n" + str(items_needed)
+	#else:
+		#item_count.text = str(items_needed) + "\n" +str(items_count)
+#
+	#
+	#print("_refresh items: ", items_count, " shopping_mode = ", DB.shopping_mode)
+	#_prof.finish()
+
+
+
+
+func _refresh() -> void:
+	var _prof := PB.ms("PlanningScreen._refresh total")
+
+	info("_refresh items: …")          # leave your original line untouched
+
+	# 1.  cache filter values
+	_search_txt = search.text.to_lower()
+	var cat_id  = category.get_item_id(category.selected)
+
+	# 2.  single pass over STATIC pool → hide/show
+	var visible_cnt := 0
+	var needed_cnt  := 0
+	var in_cart_cnt := 0
+
+	for row in ItemRowManager._pool:          # always 570 elements
+		var it: Dictionary = row.get_meta("item_dict")
+
+		var show := true
+		# ----- apply identical filters you used before -----
+		if bool(it.get("is_deleted",false)):   show = false
+		elif DB.shopping_mode and !bool(it.get("needed",false)): show = false
+		elif _search_txt and !str(it.name).to_lower().contains(_search_txt): show = false
+		elif cat_id != -2 and int(it.category_id) != cat_id:  show = false
+
+		row.visible = show
+		if show:
+			visible_cnt += 1
+			if bool(it.get("needed",false)):  needed_cnt  += 1
+			if bool(it.get("in_cart",false)): in_cart_cnt += 1
+
+	# 3.  update counters exactly like you did before
 	if DB.shopping_mode:
-		item_count.text = str(items_in_cart) + "\n" + str(items_needed)
+		item_count.text = str(in_cart_cnt) + "\n" + str(needed_cnt)
 	else:
-		item_count.text = str(items_needed) + "\n" +str(items_count)
+		item_count.text = str(needed_cnt) + "\n" + str(visible_cnt)
 
-	
-	print("_refresh items: ", items_count, " shopping_mode = ", DB.shopping_mode)
+	# >>> original closing print kept  <<<
+	print("_refresh items: ", visible_cnt, " shopping_mode = ", DB.shopping_mode)
+	_prof.finish()
 
 
-func _compare_german(a: String, b: String) -> bool:
-	var str_a = a.to_lower()
-	var str_b = b.to_lower()
+func compare_german(a, b) -> bool:
+	#print("compare_german")
+	var str_a = str(a).to_lower()
+	var str_b = str(b).to_lower()
 
 	# Umlaute und ß ersetzen
 	str_a = str_a.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
 	str_b = str_b.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
 
 	# Alphabetischen Vergleich durchführen
-	print(str_a + " : " + str_b)
-	return str_a < str_b
+	#print(str_a + " : " + str_b)
+	if str_a < str_b:
+		return true
+	return false
 
 
 
@@ -250,7 +337,9 @@ func _close_editor(popup: Window) -> void:
 
 
 func _edit_item(id: String) -> void:
-	#print("edit_item: ", id)
+	if shopping_mode == true:
+		info("edit_item in shopping: " + id)
+	info("edit_item: " + id)
 	_open_editor(id)
 
 
@@ -306,6 +395,7 @@ func _get_editor() -> Window:
 
 
 func _input(event) -> void:
+	#info(str(event))
 	#if event is InputEventKey and event.pressed:
 		#print(OS.get_keycode_string(event.keycode))
 	if event is InputEventKey and event.keycode in [KEY_BACK, KEY_ESCAPE] and event.pressed:

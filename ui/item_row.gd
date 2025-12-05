@@ -2,7 +2,7 @@ extends PanelContainer
 class_name ItemRow
 
 signal long_pressed
-signal needed_changed(item_id: String, needed: bool)
+#signal needed_changed(item_id: String, needed: bool)
 signal in_cart_changed(item_id: String)
 
 # --- gesture constants ---
@@ -11,13 +11,26 @@ const LONG_PRESS_TIME   := 0.6
 const SCROLL_THRESHOLD  := 15.0
 
 # --- state ---
-var shopping_mode : bool = false
-var item_id       : String  = "-1"
-var is_deleted    : bool = false
-var touch_start_time  : float  = 0.0
-var touch_start_pos   : Vector2 = Vector2.ZERO
-var has_moved  : bool = false
-var is_scrolling : bool = false
+var shopping_mode    : bool    = false
+var touch_start_time : float   = 0.0
+var touch_start_pos  : Vector2 = Vector2.ZERO
+var has_moved        : bool    = false
+var is_scrolling     : bool    = false
+
+# item dictionary
+var my_item     : Dictionary = {}
+
+# item data
+var item_id     : String = "-1"
+var iname       : String = ""
+var amount      : float  = 0.0
+var unit        : String = ""
+var description : String = ""
+var category_id : int    = -1
+var needed      : bool   = false
+var in_cart     : bool   = false
+var price_cents : int    = 0
+var is_deleted  : bool   = false
 
 # --------------------------------------------------
 # READY
@@ -32,71 +45,39 @@ func _ready() -> void:
 	$".".mouse_filter = Control.MOUSE_FILTER_PASS
 	$".".gui_input.connect(_on_item_row_input)
 	_make_children_ignore_mouse($".")
-	needed_changed.connect(toggle_needed)
-	
-	
-# --------------------------------------------------
-# DRAW  (strike-through)
-# --------------------------------------------------
-#@onready var _strike_color := Color.ORANGE_RED
-#@onready var _strike_color := Color.BLACK
-#@onready var _line_width  := int(2.0 * get_tree().root.content_scale_factor + 0.5)
-
-#func _draw() -> void:
-	##print("_drawn: ", item_id)
-#
-	#if not DB.shopping_mode or not %MainLine.get_meta("in_cart", false):
-		##if DB.shopping_mode: print("no line drawn: ", item_id) 
-		#return
-	##print("draw_rect=", get_viewport().get_visible_rect(), " global_pos=", global_position, " local_rect=", Rect2(Vector2.ZERO, size))
-	#
-	## strike MainLine
-	#var r := Rect2(%MainLine.get_global_rect())
-	#r.position -= global_position
-	#var y := int(r.position.y + r.size.y * 0.5)   # integer pixel
-	#draw_line(Vector2(r.position.x, y),
-			  #Vector2(r.position.x + r.size.x, y),
-			  #_strike_color, _line_width)
-	#print(Vector2(r.position.x, y),
-			  #Vector2(r.position.x + r.size.x, y),
-			  #_strike_color, _line_width)
-#
-	## Description
-	#if %DescriptionLabel.visible:
-		#r = Rect2(%DescriptionLabel.get_global_rect())
-		#r.position -= global_position
-		#y = int(r.position.y + r.size.y * 0.5)
-		#draw_line(Vector2(r.position.x, y),
-				  #Vector2(r.position.x + r.size.x, y),
-				  #_strike_color, _line_width)
-#
-	##await get_tree().process_frame
-	#print("line drawn: ", item_id)
+	#needed_changed.connect(DB.toggle_needed)
 
 
 # --------------------------------------------------
 # PUBLIC API
 # --------------------------------------------------
 func setup(item: Dictionary) -> void:
+	#set_meta("item_dict", item)   # store once
 	item_id = item.get("id", "")
 	update_from_item(item)
 
+
 func update_from_item(item: Dictionary) -> void:
+	my_item = item # save current data
 	if item_id == "-1":
 		item_id = item.get("id", "")
 
-	#print("update_from_item: ", item_id, " shopping_mode: ", DB.shopping_mode)
-	var iname       = str(item.get("name",        ""))
-	var amount      = float(item.get("amount",     0.0))
-	var unit        = str(item.get("unit",         ""))
-	var description = str(item.get("description",  ""))
-	var category_id = int(item.get("category_id",  -1))
-	var needed      = bool(item.get("needed",      false))
-	var in_cart     = bool(item.get("in_cart",     false))
-	var price_cents = int(item.get("price_cents",  0))
-	is_deleted      = bool(item.get("is_deleted", false))
+	iname       = str(item.get("name",        ""))
+	amount      = float(item.get("amount",     0.0))
+	unit        = str(item.get("unit",         ""))
+	description = str(item.get("description",  ""))
+	category_id = int(item.get("category_id",  -1))
+	needed      = bool(item.get("needed",      false))
+	in_cart     = bool(item.get("in_cart",     false))
+	price_cents = int(item.get("price_cents",  0))
+	is_deleted  = bool(item.get("is_deleted", false))
 
 	%delPanel.visible = is_deleted
+
+	print("update_from_item: ", iname, \
+		" shopping_mode: ", DB.shopping_mode, \
+		" needed: ", needed \
+		)
 
 	# --- store in_cart for draw ---
 	%MainLine.set_meta("in_cart", in_cart)
@@ -115,7 +96,7 @@ func update_from_item(item: Dictionary) -> void:
 	# --- shopping tint ---
 	#modulate = Color(1, 0.8, 0.8, 0.6) if (DB.shopping_mode and in_cart) else Color.WHITE
 	if (DB.shopping_mode and in_cart):
-		#print("shopping and in_cart: ", item_id)
+		print("shopping and in_cart: ", iname)
 		#%ItemRow.modulate = Color(1, 0.8, 0.8, 0.6)
 		%inCartPanel.modulate = Color(0, 0.75, 0.25, 0.5)
 		%inCartPanel.visible = true
@@ -143,6 +124,7 @@ func update_from_item(item: Dictionary) -> void:
 
 	# --- request redraw for strike-through ---
 	#queue_redraw()
+	set_meta("item_dict", item)   # store updated item data
 
 
 func set_shopping_mode(enabled: bool) -> void:
@@ -163,6 +145,7 @@ func _on_item_row_input(event: InputEvent) -> void:
 	
 	if event is InputEventScreenTouch:
 		if event.pressed:
+			print("touch event.pressed")
 			touch_start_time = Time.get_unix_time_from_system()
 			touch_start_pos  = event.position
 			has_moved = false
@@ -174,21 +157,27 @@ func _on_item_row_input(event: InputEvent) -> void:
 			t.timeout.connect(_on_long_press_detected)
 			t.start()
 		else:
-			#var dur := Time.get_unix_time_from_system() - touch_start_time
+			print(str(event))
+			var dur := Time.get_unix_time_from_system() - touch_start_time
 			var dist : float = (event.position - touch_start_pos).length()
 			for c in get_children():
 				if c is Timer and c.wait_time == LONG_PRESS_TIME:
-					c.queue_free()
+					c.queue_free() # remove long_press timer
 			if not has_moved and not is_scrolling and dist < TAP_MAX_DISTANCE:
 				if DB.shopping_mode:
-					in_cart_changed.emit(item_id)
+					#in_cart_changed.emit(item_id)
+					in_cart = DB.toggle_in_cart(item_id)
+					my_item.set("in_cart", in_cart)
+					update_from_item(my_item)
+					print("in_cart, dur: " + str(dur) + " dist: " + str(dist) + " : " + str(in_cart))
 				else:
-					var new_needed : bool = !%NeedCheck.button_pressed
-					%NeedCheck.button_pressed = new_needed
-					needed_changed.emit(item_id, new_needed)
+					needed = DB.toggle_needed(item_id)
+					my_item.set("needed", needed)
+					update_from_item(my_item)
+					print("dur: " + str(dur) + " dist: " + str(dist) + " needed: " + str(needed))
 
 				_show_tap_feedback()
-				#print("after tap_feedback, dur = ", dur)
+				print("after tap_feedback, dur = ", dur)
 
 	elif event is InputEventScreenDrag:
 		var dist : float = (event.position - touch_start_pos).length()
@@ -236,7 +225,7 @@ func _update_need_check_appearance() -> void:
 
 func toggle_needed(p_item_id: String, needed: bool) -> void:
 	#NC todo: toggle should not need bool, but might return current state
-		#print("toggle_needed id: ", p_item_id, " need: ", needed)
+		print("toggle_needed id: ", p_item_id, " need: ", needed)
 		if p_item_id != "-1":
 			var items := DB.select_items("id = ?", [p_item_id])
 			if not items.is_empty():

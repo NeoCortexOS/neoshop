@@ -4,6 +4,9 @@ extends Control
 const BACKUP_DIR := "user://backups"
 
 @onready var dirty_btn: Button = %DirtyButton
+@onready var clean_btn: Button = %CleanButton
+@onready var clear_needed_btn: Button = %ClearNeededButton
+@onready var clear_cart_btn: Button = %ClearCartButton
 @onready var host_btn: Button = %HostButton
 @onready var join_btn: Button = %JoinButton
 @onready var list: ItemList = %DiscoveredList
@@ -30,6 +33,9 @@ func _on_info_message(msg: String) -> void:
 
 func _ready() -> void:
 	dirty_btn.pressed.connect(_on_dirty)
+	clean_btn.pressed.connect(_on_clean)
+	clear_needed_btn.pressed.connect(_on_clear_needed)
+	clear_cart_btn.pressed.connect(_on_clear_cart)
 	host_btn.pressed.connect(_on_host)
 	join_btn.pressed.connect(_on_join_pressed)
 	list.item_selected.connect(_on_pick_device)
@@ -92,8 +98,22 @@ func _on_sync_complete():
 func _on_sync_failed() -> void:
 	info("❌ Sync failed – tap Host/Join to retry")
 
+
 func _on_dirty() -> void:
 	DB.mark_all_dirty()
+
+
+func _on_clean() -> void:
+	DB.mark_all_clean()
+
+
+func _on_clear_needed() -> void:
+	DB.clear_needed()
+
+
+func _on_clear_cart() -> void:
+	DB.clear_cart()
+
 
 func _on_host() -> void:
 	P2P.host_session()

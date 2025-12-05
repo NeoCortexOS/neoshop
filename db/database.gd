@@ -46,9 +46,10 @@ func _ready():
 	if int(get_config("last_purge_ts", "0")) < Time.get_unix_time_from_system() - 3600:
 		purge_old_deleted()
 	else:
-		info(get_config("last_purge_ts", "0") +" - "+ str(Time.get_unix_time_from_system() - 3600))
+		info("last purge less than an hour ago")
 	
 	TranslationServer.set_locale(DB.get_config("language", "en"))
+	select_categories()
 
 
 func _table_exists(table:String) -> bool:
@@ -105,9 +106,9 @@ func delete_category(id: int) -> void:
 
 
 func select_categories() -> Array:
+	info("select_categories")
 	_db.query("SELECT * FROM category ORDER BY name COLLATE NOCASE")
 	cats = _db.query_result
-	print("select_categories")
 	# Add categories to dropdown
 	for cat in cats:
 		catname[cat["id"]] = cat["name"]
@@ -123,10 +124,11 @@ func select_category(id: int) -> Array:
 # Item
 # --------------------------------------------------------------
 func insert_item(p: Dictionary) -> String:
-	if p.get("id", "") == "":
-		p["id"] = UUID.v4()          # <-- string UUID
-	p["updated_at"] = Time.get_unix_time_from_system()*1000
-	p["sync_flag"]  = 1
+	#if p.get("id", "") == "":
+		#p["id"] = UUID.v4()          # <-- string UUID
+	#if p.get("updated_at",0) == 0:
+		#p["updated_at"] = Time.get_unix_time_from_system()*1000
+	#p["sync_flag"]  = 1
 	var query = """
 		INSERT INTO item (id, name, amount, unit, description, category_id,
 						  needed, in_cart, last_bought, price_cents, on_sale,
@@ -134,7 +136,7 @@ func insert_item(p: Dictionary) -> String:
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
 	"""
 	var params = [
-		p.get("id", ""),
+		p.get("id", UUID.v4()),
 		p.get("name", ""),
 		p.get("amount", 0.0),
 		p.get("unit", ""),
@@ -145,8 +147,8 @@ func insert_item(p: Dictionary) -> String:
 		p.get("last_bought", 0),
 		p.get("price_cents", 0),
 		p.get("on_sale", false),
-		p["updated_at"],
-		p["sync_flag"]
+		p.get("updated_at", Time.get_unix_time_from_system()*1000),
+		p.get("sync_flag",1)
 	]
 	var success = _db.query_with_bindings(query, params)
 	if success:
@@ -156,8 +158,10 @@ func insert_item(p: Dictionary) -> String:
 
 
 func update_item(p: Dictionary) -> void:
-	p["updated_at"] = Time.get_unix_time_from_system()*1000
-	p["sync_flag"]  = 1
+	if p.get("id", "") == "":
+		push_error("Failed to update item without ID")
+	#p["updated_at"] = Time.get_unix_time_from_system()*1000
+	#p["sync_flag"]  = 1
 	var query = """
 		UPDATE item SET
 			name = ?, amount = ?, unit = ?, description = ?, category_id = ?,
@@ -176,29 +180,30 @@ func update_item(p: Dictionary) -> void:
 		p.get("last_bought", 0),
 		p.get("price_cents", 0),
 		p.get("on_sale", false),
-		p["updated_at"],
-		p["sync_flag"],
+		p.get("updated_at", Time.get_unix_time_from_system()*1000),
+		p.get("sync_flag",1),
 		p.get("is_deleted", false),
-		p.get("id", "")
+		p.get("id", "!empty")
 	]
 	var success = _db.query_with_bindings(query, params)
-	print("DB updated: ", p.get("id", ""), " success: ", success)
+	#print("DB updated: ", p.get("id", ""), " success: ", success)
 	if not success:
 		push_error("Failed to update item: " + p.get("id", ""))
 
 
 func upsert_item(p: Dictionary) -> void:
-	p["updated_at"] = Time.get_unix_time_from_system()*1000
+	if p.get("updated_at",0) == 0:
+		p["updated_at"] = Time.get_unix_time_from_system()*1000
 	p["sync_flag"]  = 0          # mark clean immediately
 	var id : String = p.get("id", "empty?")
 
 	if select_item(id) != []:
 		update_item(p)
-		info("upsert updated id: " + id)
+		#info("upsert updated id: " + id)
 	else:
 	# -- no existing row → insert --
 		insert_item(p)
-		info("upsert inserted id: " + id)
+		#info("upsert inserted id: " + id)
 
 
 func select_items(where_sql := "", params := []) -> Array:
@@ -227,16 +232,19 @@ func undelete_item(id: String) -> void:
 		push_error("Failed to soft-undelete item: " + id)
 
 
-func toggle_needed(id: String, needed: bool) -> void:
+func toggle_needed(id: String) -> bool:
 	var success = _db.query_with_bindings(
-		"UPDATE item SET needed = ?, updated_at = unixepoch('subsec')*1000, sync_flag = 1 WHERE id = ?",
-		[needed, id])
+		"UPDATE item SET needed = NOT needed, in_cart = 0, updated_at = unixepoch('subsec')*1000, sync_flag = 1 WHERE id = ?",
+		[id])
 	if not success:
 		push_error("Failed to toggle needed: " + id)
-	print("DB toggle_needed id: ", id, " need: ", needed)
+	select_item(id)
+	var needed : bool = bool(_db.query_result[0]["needed"])
+	print("DB toggle_needed: ", _db.query_result[0]["name"], " need: ", needed)
+	return needed
 
 
-func toggle_in_cart(id: String) -> void:
+func toggle_in_cart(id: String) -> bool:
 	# atomic: flip in_cart, touch updated_at, set last_bought if newly moved into cart
 	var sql = """
 		UPDATE item
@@ -252,7 +260,10 @@ func toggle_in_cart(id: String) -> void:
 	var success = _db.query_with_bindings(sql, [id])
 	if not success:
 		push_error("Failed to toggle in_cart: " + id)
-	print("DB toggle_in_cart, id: ", id)
+	select_item(id)
+	var in_cart : bool = bool(_db.query_result[0]["in_cart"])
+	print("DB toggle_in_cart: ", _db.query_result[0]["name"], " in_cart: ", in_cart)
+	return in_cart
 
 
 func select_item_count() -> int:
@@ -294,6 +305,18 @@ func mark_clean(table: String, id: String) -> void:
 		push_error("Failed to mark clean %s id %s" % [table, id])
 
 
+func mark_all_clean() -> void:
+	var success = _db.query("UPDATE item SET sync_flag = 0")
+	info("marked all items clean")
+	if not success:
+		push_error("Failed to mark items clean")
+		
+	success = _db.query("UPDATE category SET sync_flag = 0")
+	info("marked all categories clean")
+	if not success:
+		push_error("Failed to mark categories clean")
+
+
 func mark_all_dirty() -> void:
 	var success = _db.query("UPDATE item SET sync_flag = 1")
 	info("marked all items dirty")
@@ -304,6 +327,20 @@ func mark_all_dirty() -> void:
 	info("marked all categories dirty")
 	if not success:
 		push_error("Failed to mark categories dirty")
+
+
+func clear_needed() -> void:
+	var success = _db.query("UPDATE item SET needed = 0")
+	info("cleared all items needed flags")
+	if not success:
+		push_error("Failed to mark items un-needed")
+
+
+func clear_cart() -> void:
+	var success = _db.query("UPDATE item SET in_cart = 0")
+	info("cleared cart")
+	if not success:
+		push_error("Failed to clear cart")
 
 
 # never set raw flags outside these helpers

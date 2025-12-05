@@ -24,6 +24,8 @@ ThemeManager="*res://scripts/theme_manager.gd"
 BackupManager="*res://scripts/backup_manager.gd"
 LocaleHelper="*res://scripts/locale_helper.gd"
 P2P="*res://scripts/p2p_manager.gd"
+Profiler="*res://addons/godex_ui_profiler/profiler.gd"
+ItemRowManager="*res://scripts/item_row_manager.gd"
 
 [debug]
 
@@ -42,7 +44,7 @@ window/ios/hide_status_bar=false
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot-sqlite/plugin.cfg")
+enabled=PackedStringArray("res://addons/godex_ui_profiler/plugin.cfg", "res://addons/godot-sqlite/plugin.cfg")
 
 [input_devices]
 

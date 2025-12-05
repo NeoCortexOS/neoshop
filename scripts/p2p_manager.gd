@@ -276,6 +276,8 @@ func _send_next_row():
 		return
 	# Send the next row from current_rows
 	var row : Dictionary = current_rows[current_row_index]
+	row["sync_flag"] = 0
+	print("send_next_row: " + str(row))
 	var msg := {
 		"table": current_table,
 		"row": row
@@ -290,6 +292,7 @@ func _send_rows():
 		_send_table_done()
 		return
 	var row: Dictionary = current_rows[current_row_index] as Dictionary
+	row["sync_flag"] = 0
 	var pkt := { "table": current_table, "row": row }
 	ws_peer.send_text(JSON.stringify(pkt))
 	sync_progress.emit(current_table, current_row_index + 1, current_rows.size())
@@ -387,7 +390,7 @@ func _handle_host_row(table: String, row: Dictionary):
 
 
 func _send_ack(id: String, action: String, row: Dictionary = {}):
-	info("send_ack: " + id + " " + action + " " + str(row))
+	#info("send_ack: " + id + " " + action + " " + str(row))
 	var ack := { "ack": true, "id": id, "action": action }
 	if action == "reject":
 		ack["row"] = row

@@ -68,6 +68,24 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "mark all dirty"
 
+[node name="CleanButton" type="Button" parent="MainVBox/ToolsList"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "mark all clean"
+
+[node name="ClearNeededButton" type="Button" parent="MainVBox/ToolsList"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "clear needed flags"
+
+[node name="ClearCartButton" type="Button" parent="MainVBox/ToolsList"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "clear in_cart flags"
+
+[node name="HSeparator4" type="HSeparator" parent="MainVBox/ToolsList"]
+layout_mode = 2
+
 [node name="HostButton" type="Button" parent="MainVBox/ToolsList"]
 unique_name_in_owner = true
 layout_mode = 2
