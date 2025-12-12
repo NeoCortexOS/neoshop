@@ -1,1 +1,2 @@
+addons/godex_ui_profiler
 addons/godot-sqlite

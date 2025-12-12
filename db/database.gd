@@ -150,9 +150,10 @@ func insert_item(p: Dictionary) -> String:
 		p.get("updated_at", Time.get_unix_time_from_system()*1000),
 		p.get("sync_flag",1)
 	]
+	var new_id = params[0]
 	var success = _db.query_with_bindings(query, params)
 	if success:
-		return p["id"]
+		return new_id
 	push_error("Insert item failed")
 	return ""
 
@@ -252,7 +253,7 @@ func toggle_in_cart(id: String) -> bool:
 			updated_at = unixepoch('subsec')*1000,
 			sync_flag = 1,
 			last_bought = CASE
-				WHEN (NOT in_cart) THEN unixepoch('subsec')
+				WHEN (NOT in_cart) THEN unixepoch('subsec')*1000
 				ELSE last_bought
 			END
 		WHERE id = ?

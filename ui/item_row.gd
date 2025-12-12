@@ -1,14 +1,14 @@
 extends PanelContainer
 class_name ItemRow
 
-signal long_pressed
+#signal long_pressed
 #signal needed_changed(item_id: String, needed: bool)
-signal in_cart_changed(item_id: String)
+#signal in_cart_changed(item_id: String)
 
-# --- gesture constants ---
-const TAP_MAX_DISTANCE  := 30.0
-const LONG_PRESS_TIME   := 0.6
-const SCROLL_THRESHOLD  := 15.0
+## --- gesture constants ---
+#const TAP_MAX_DISTANCE  := 30.0
+#const LONG_PRESS_TIME   := 0.6
+#const SCROLL_THRESHOLD  := 15.0
 
 # --- state ---
 var shopping_mode    : bool    = false
@@ -31,6 +31,9 @@ var needed      : bool   = false
 var in_cart     : bool   = false
 var price_cents : int    = 0
 var is_deleted  : bool   = false
+var updated_at  : int    = 0
+var last_bought : int    = 0
+
 
 # --------------------------------------------------
 # READY
@@ -43,7 +46,7 @@ func _ready() -> void:
 	#_make_children_ignore_mouse(%ItemRow)
 	# make ItemContainer the exclusive touch handler
 	$".".mouse_filter = Control.MOUSE_FILTER_PASS
-	$".".gui_input.connect(_on_item_row_input)
+	#$".".gui_input.connect(_on_item_row_input)
 	_make_children_ignore_mouse($".")
 	#needed_changed.connect(DB.toggle_needed)
 
@@ -59,7 +62,9 @@ func setup(item: Dictionary) -> void:
 
 func update_from_item(item: Dictionary) -> void:
 	my_item = item # save current data
+	# not 100% sure if that is still right
 	if item_id == "-1":
+		print("update_from_item found id: -1")
 		item_id = item.get("id", "")
 
 	iname       = str(item.get("name",        ""))
@@ -71,16 +76,19 @@ func update_from_item(item: Dictionary) -> void:
 	in_cart     = bool(item.get("in_cart",     false))
 	price_cents = int(item.get("price_cents",  0))
 	is_deleted  = bool(item.get("is_deleted", false))
+	updated_at  = int(item.get("updated_at", 0))
+	last_bought = int(item.get("last_bought", 0))
 
 	%delPanel.visible = is_deleted
 
-	print("update_from_item: ", iname, \
-		" shopping_mode: ", DB.shopping_mode, \
-		" needed: ", needed \
-		)
+	#print("update_from_item: ", iname, \
+		#" shopping_mode: ", DB.shopping_mode, \
+		#" needed: ", needed, \
+		#" in_cart: ", in_cart \
+		#)
 
-	# --- store in_cart for draw ---
-	%MainLine.set_meta("in_cart", in_cart)
+	## --- store in_cart for draw ---
+	#%MainLine.set_meta("in_cart", in_cart)
 
 	# --- basic UI ---
 	%NameLabel.text        = iname
@@ -138,56 +146,56 @@ func set_shopping_mode(enabled: bool) -> void:
 			pass #NC
 
 
-# --------------------------------------------------
-# GESTURE HANDLING  (unchanged logic, only feedback fixed)
-# --------------------------------------------------
-func _on_item_row_input(event: InputEvent) -> void:
-	
-	if event is InputEventScreenTouch:
-		if event.pressed:
-			print("touch event.pressed")
-			touch_start_time = Time.get_unix_time_from_system()
-			touch_start_pos  = event.position
-			has_moved = false
-			is_scrolling = false
-			var t := Timer.new()
-			t.wait_time = LONG_PRESS_TIME
-			t.one_shot = true
-			add_child(t)
-			t.timeout.connect(_on_long_press_detected)
-			t.start()
-		else:
-			print(str(event))
-			var dur := Time.get_unix_time_from_system() - touch_start_time
-			var dist : float = (event.position - touch_start_pos).length()
-			for c in get_children():
-				if c is Timer and c.wait_time == LONG_PRESS_TIME:
-					c.queue_free() # remove long_press timer
-			if not has_moved and not is_scrolling and dist < TAP_MAX_DISTANCE:
-				if DB.shopping_mode:
-					#in_cart_changed.emit(item_id)
-					in_cart = DB.toggle_in_cart(item_id)
-					my_item.set("in_cart", in_cart)
-					update_from_item(my_item)
-					print("in_cart, dur: " + str(dur) + " dist: " + str(dist) + " : " + str(in_cart))
-				else:
-					needed = DB.toggle_needed(item_id)
-					my_item.set("needed", needed)
-					update_from_item(my_item)
-					print("dur: " + str(dur) + " dist: " + str(dist) + " needed: " + str(needed))
-
-				_show_tap_feedback()
-				print("after tap_feedback, dur = ", dur)
-
-	elif event is InputEventScreenDrag:
-		var dist : float = (event.position - touch_start_pos).length()
-		if dist > SCROLL_THRESHOLD:
-			has_moved = true
-			is_scrolling = true
-
-func _on_long_press_detected() -> void:
-	if not has_moved and not is_scrolling:
-		long_pressed.emit(item_id)
+## --------------------------------------------------
+## GESTURE HANDLING  (unchanged logic, only feedback fixed)
+## --------------------------------------------------
+#func _on_item_row_input(event: InputEvent) -> void:
+	#return
+	#if event is InputEventScreenTouch:
+		#if event.pressed:
+			#print("touch event.pressed")
+			#touch_start_time = Time.get_unix_time_from_system()
+			#touch_start_pos  = event.position
+			#has_moved = false
+			#is_scrolling = false
+			#var t := Timer.new()
+			#t.wait_time = LONG_PRESS_TIME
+			#t.one_shot = true
+			#add_child(t)
+			#t.timeout.connect(_on_long_press_detected)
+			#t.start()
+		#else:
+			#print(str(event))
+			#var dur := Time.get_unix_time_from_system() - touch_start_time
+			#var dist : float = (event.position - touch_start_pos).length()
+			#for c in get_children():
+				#if c is Timer and c.wait_time == LONG_PRESS_TIME:
+					#c.queue_free() # remove long_press timer
+			#if not has_moved and not is_scrolling and dist < TAP_MAX_DISTANCE:
+				#if DB.shopping_mode:
+					##in_cart_changed.emit(item_id)
+					#in_cart = DB.toggle_in_cart(item_id)
+					#my_item.set("in_cart", in_cart)
+					#update_from_item(my_item)
+					#print("in_cart, dur: " + str(dur) + " dist: " + str(dist) + " : " + str(in_cart))
+				#else:
+					#needed = DB.toggle_needed(item_id)
+					#my_item.set("needed", needed)
+					#update_from_item(my_item)
+					#print("dur: " + str(dur) + " dist: " + str(dist) + " needed: " + str(needed))
+#
+				#_show_tap_feedback()
+				#print("after tap_feedback, dur = ", dur)
+#
+	#elif event is InputEventScreenDrag:
+		#var dist : float = (event.position - touch_start_pos).length()
+		#if dist > SCROLL_THRESHOLD:
+			#has_moved = true
+			#is_scrolling = true
+#
+#func _on_long_press_detected() -> void:
+	#if not has_moved and not is_scrolling:
+		#long_pressed.emit(item_id)
 
 # --------------------------------------------------
 # FEEDBACK ANIMATION  (fixed)
@@ -223,13 +231,13 @@ func _update_need_check_appearance() -> void:
 	pass
 
 
-func toggle_needed(p_item_id: String, needed: bool) -> void:
-	#NC todo: toggle should not need bool, but might return current state
-		print("toggle_needed id: ", p_item_id, " need: ", needed)
-		if p_item_id != "-1":
-			var items := DB.select_items("id = ?", [p_item_id])
-			if not items.is_empty():
-				update_from_item(items[0])
+#func toggle_needed(p_item_id: String, needed: bool) -> void:
+	##NC todo: toggle should not need bool, but might return current state
+		#print("toggle_needed id: ", p_item_id, " need: ", needed)
+		#if p_item_id != "-1":
+			#var items := DB.select_items("id = ?", [p_item_id])
+			#if not items.is_empty():
+				#update_from_item(items[0])
 	
 	
 func _get_category_name(id: int) -> String:

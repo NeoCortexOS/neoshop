@@ -15,11 +15,43 @@ const PB := preload("res://addons/godex_ui_profiler/profile_block.gd")
 @onready var toggle_shopping_mode_btn  : Button = $BackgroundPanel/MainVBox/BottomBar/ToggleShoppingModeButton
 @onready var category_editor: ConfirmationDialog = %CategoryEditor
 
-var rows : Dictionary = {}   # int -> ItemRow
+#var rows : Dictionary = {}   # int -> ItemRow
 var shopping_mode : bool = false
 var categories
 var _saved_scroll : int = 0
 var _search_txt: String = ""          # cached filter state
+
+# --- input handling variables ---
+signal long_pressed
+# --- gesture constants ---
+const TAP_MAX_DISTANCE  := 30.0
+const LONG_PRESS_TIME   := 0.6
+const SCROLL_THRESHOLD  := 15.0
+
+# --- state ---
+var touch_start_time : float   = 0.0
+var touch_start_pos  : Vector2 = Vector2.ZERO
+var has_moved        : bool    = false
+var is_scrolling     : bool    = false
+var is_long_pressed  : bool    = false
+
+# --- active_item ---
+var active_item: Control = null
+# item dictionary
+var my_item     : Dictionary = {}
+
+# item data
+var item_id     : String = "-1"
+var iname       : String = ""
+var amount      : float  = 0.0
+var unit        : String = ""
+var description : String = ""
+var category_id : int    = -1
+var needed      : bool   = false
+var in_cart     : bool   = false
+var price_cents : int    = 0
+var is_deleted  : bool   = false
+
 
 ##
 ## ---------- logging ----------
@@ -251,8 +283,6 @@ func _refresh_category_filter():
 func _refresh() -> void:
 	var _prof := PB.ms("PlanningScreen._refresh total")
 
-	info("_refresh items: …")          # leave your original line untouched
-
 	# 1.  cache filter values
 	_search_txt = search.text.to_lower()
 	var cat_id  = category.get_item_id(category.selected)
@@ -262,7 +292,7 @@ func _refresh() -> void:
 	var needed_cnt  := 0
 	var in_cart_cnt := 0
 
-	for row in ItemRowManager._pool:          # always 570 elements
+	for row in ItemRowManager._pool:          # always all elements
 		var it: Dictionary = row.get_meta("item_dict")
 
 		var show := true
@@ -281,6 +311,23 @@ func _refresh() -> void:
 	# 3.  update counters exactly like you did before
 	if DB.shopping_mode:
 		item_count.text = str(in_cart_cnt) + "\n" + str(needed_cnt)
+		ItemRowManager._pool.sort_custom(func(a, b):
+			var a_in_cart = a.in_cart
+			var b_in_cart = b.in_cart
+			
+			if a_in_cart != b_in_cart:
+				return !a_in_cart  # False first (not in cart)
+			
+			if !a_in_cart and !b_in_cart:
+				# Both not in cart, sort by category
+				#print(DB.catname[b.category_id])
+				return DB.catname[a.category_id] < DB.catname[b.category_id]
+			
+			# Both in cart, sort by last_bought (newest first)
+			var a_last = a.last_bought
+			var b_last = b.last_bought
+			return b_last < a_last  # Descending order
+		)
 	else:
 		item_count.text = str(needed_cnt) + "\n" + str(visible_cnt)
 
@@ -405,3 +452,80 @@ func _input(event) -> void:
 		print("Application Quit")
 		get_tree().quit()
 		
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			print("touch event.pressed")
+			touch_start_time = Time.get_unix_time_from_system()
+			touch_start_pos  = event.position
+			has_moved = false
+			is_scrolling = false
+			var t := Timer.new()
+			t.wait_time = LONG_PRESS_TIME
+			t.one_shot = true
+			is_long_pressed = false
+			add_child(t)
+			t.timeout.connect(_on_long_press_detected)
+			t.start()
+		else:
+			print(str(event))
+			var dur := Time.get_unix_time_from_system() - touch_start_time
+			var dist : float = (event.position - touch_start_pos).length()
+			for c in get_children():
+				if c is Timer and c.wait_time == LONG_PRESS_TIME:
+					c.queue_free() # remove long_press timer
+			if not has_moved and not is_scrolling and dist < TAP_MAX_DISTANCE:
+				# --- pick item under cursor ---
+				active_item = _pick_item(event.position)
+				if active_item == null:
+					return
+
+				item_id = active_item.item_id
+				my_item = active_item.my_item
+				info("active_item: " + str(active_item.item_id))
+				if is_long_pressed:
+					_edit_item(item_id)
+					return
+				if DB.shopping_mode:
+					#in_cart_changed.emit(item_id)
+					in_cart = DB.toggle_in_cart(item_id)
+					my_item.set("in_cart", in_cart)
+					active_item.update_from_item(my_item)
+					print("in_cart, dur: " + str(dur) + " dist: " + str(dist) + " : " + str(in_cart))
+				else:
+					needed = DB.toggle_needed(item_id)
+					my_item.set("needed", needed)
+					active_item.update_from_item(my_item)
+					print("dur: " + str(dur) + " dist: " + str(dist) + " needed: " + str(needed))
+
+				active_item._show_tap_feedback()
+				print("planning_screen after tap_feedback, dur = ", dur)
+
+	elif event is InputEventScreenDrag:
+		var dist : float = (event.position - touch_start_pos).length()
+		if dist > SCROLL_THRESHOLD:
+			has_moved = true
+			is_scrolling = true
+
+func _on_long_press_detected() -> void:
+	if not has_moved and not is_scrolling:
+		print("ps long press detected")
+		is_long_pressed = true
+
+		long_pressed.emit(item_id)
+
+
+func _pick_item(pos: Vector2) -> Control:
+	var scroll_rect = %Scroll.get_rect() # determine the current rect of the scroll area
+	# print(str(pos) + " " + str(scroll_rect) + " " + str($%Scroll.get_global_transform()))
+	if not scroll_rect.has_point(pos): # skip if not within scroll rect
+		return
+	var count := item_list.get_child_count()
+
+	# Iterate from topmost to bottommost child for correct "visual hit"
+	for i in range(count - 1, -1, -1):
+		var cand := item_list.get_child(i)
+		if cand is Control:
+			var rect: Rect2 = cand.get_global_rect()
+			if rect.has_point(pos):
+				return cand
+	return null

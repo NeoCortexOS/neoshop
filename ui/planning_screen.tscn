@@ -101,6 +101,7 @@ size_flags_vertical = 3
 [node name="BottomBar" type="HBoxContainer" parent="BackgroundPanel/MainVBox"]
 layout_mode = 2
 size_flags_vertical = 8
+mouse_filter = 0
 alignment = 1
 
 [node name="AddButton" type="Button" parent="BackgroundPanel/MainVBox/BottomBar"]
