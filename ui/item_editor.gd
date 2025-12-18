@@ -8,6 +8,7 @@ var _item_id : String = "-1"                # -1 = new item
 var last_bought_old : float = 0
 var _categories : Array = []
 var is_deleted : bool = false
+var it : Dictionary = {}
 
 func _ready() -> void:
 	print("_ready: " + self.name)
@@ -36,7 +37,7 @@ func edit_item(id: String) -> void:
 	if items.is_empty():
 		push_error("Item %s not found" % id)
 		return
-	var it : Dictionary = items[0]
+	it = items[0]
 	last_bought_old = it.get("last_bought", 0)
 	_populate_fields(it)
 	%DeleteBtn.visible = true          # only show when editing
@@ -128,11 +129,16 @@ func _on_plus():
 
 
 func _on_delete() -> void:
+	print("delete handler: ", _item_id)
 	if _item_id != "-1":
 		if is_deleted:
 			DB.undelete_item(_item_id)
+			it.set("is_deleted", false)
 		else:
 			DB.delete_item(_item_id)
+			it.set("is_deleted", true)
+	_populate_fields(it)
+
 	#emit_signal("item_deleted")
 	#queue_free()
 

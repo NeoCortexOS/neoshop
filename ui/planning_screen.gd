@@ -15,12 +15,16 @@ const PB := preload("res://addons/godex_ui_profiler/profile_block.gd")
 @onready var toggle_shopping_mode_btn  : Button = $BackgroundPanel/MainVBox/BottomBar/ToggleShoppingModeButton
 @onready var category_editor: ConfirmationDialog = %CategoryEditor
 
+@onready var search_timer: Timer = Timer.new()   # throttles search
+var _pending_filter: Dictionary = {}             # deferred work
+var _rebuild_frame_index: int = 0
+var _visual_idx: int = 0
+
 #var rows : Dictionary = {}   # int -> ItemRow
 var shopping_mode : bool = false
 var categories
 var _saved_scroll : int = 0
 var _search_txt: String = ""          # cached filter state
-
 # --- input handling variables ---
 signal long_pressed
 # --- gesture constants ---
@@ -52,6 +56,9 @@ var in_cart     : bool   = false
 var price_cents : int    = 0
 var is_deleted  : bool   = false
 
+# ----------  res://ui/planning_screen.gd  ----------
+enum RefreshState { FILTER, VISUAL, IDLE }
+var refresh_state : RefreshState = RefreshState.IDLE
 
 ##
 ## ---------- logging ----------
@@ -68,16 +75,66 @@ func _ready() -> void:
 	#_populate_category_filter()
 	_refresh_category_filter()
 	_refresh()
-	search.text_changed.connect(func(_t): _refresh())
-	category.item_selected.connect(func(_t): _refresh())
+	add_child(search_timer)
+	search_timer.wait_time = 0.15
+	search_timer.one_shot = true
+	search_timer.timeout.connect(_on_search_timer)
+	search.text_changed.connect(_on_search_text_changed)
 	add_btn.pressed.connect(_on_add)
 	settings.pressed.connect(_on_settings)
 	tools.pressed.connect(_on_tools)
 	toggle_shopping_mode_btn.pressed.connect(_on_shopping_toggle)
-	
+
+	category.item_selected.connect(_on_category_chosen)
 	%CategoryEditButton.pressed.connect(_on_category_edit_pressed)
 	category_editor.category_saved.connect(_on_categories_changed)
 	
+
+func _on_search_text_changed(_t):
+	search_timer.start()        # restart on every keystroke
+
+func _on_search_timer():
+	_refresh_deferred()
+
+
+func _refresh_deferred():
+	# 1. heavy sort (already cached keys) – single frame
+	ItemRowManager.rebuild_for_mode(DB.shopping_mode)
+	ItemRowManager.refresh_visuals_async(DB.shopping_mode)   # pass mode
+	# 2. filter visibility spread over frames
+	_pending_filter = {
+		search = search.text.to_lower(),
+		cat_id = category.get_item_id(category.selected),
+		shopping = DB.shopping_mode
+	}
+	_rebuild_frame_index = 0
+	refresh_state        = RefreshState.FILTER   # enter state machine
+	set_process(true)           # enable incremental filter
+
+
+func _process(_dt: float) -> void:
+	match refresh_state:
+		RefreshState.FILTER:
+			var rows: Array[ItemRow] = ItemRowManager._pool
+			var last: int = min(_rebuild_frame_index + 30, rows.size())
+			for i in range(_rebuild_frame_index, last):
+				var row: ItemRow = rows[i]
+				var it: Dictionary = row.get_meta("item_dict")
+				# ----- visibility filter -----
+				@warning_ignore("shadowed_variable_base_class")
+				var show: bool = true
+				if bool(it.get("is_deleted", false)): show = false
+				elif bool(_pending_filter.get("shopping", false)) and !bool(it.get("needed", false)): show = false
+				elif !str(_pending_filter.get("search", "")).is_empty() and !str(it.name).to_lower().contains(str(_pending_filter.get("search", ""))): show = false
+				elif int(_pending_filter.get("cat_id", -2)) != -2 and int(it.category_id) != int(_pending_filter.get("cat_id", -2)): show = false
+				row.visible = show
+				# ----- visual refresh in SAME frame -----
+				row.set_shopping_mode(bool(_pending_filter.get("shopping", false)))
+				row.update_from_item(it)
+			_rebuild_frame_index = last
+			if _rebuild_frame_index >= rows.size():
+				refresh_state = RefreshState.IDLE
+				set_process(false)
 
 
 func _update_app_title() -> void:
@@ -86,6 +143,12 @@ func _update_app_title() -> void:
 	%DBName.text = db_name.replace('.gd', '')
 	%AppMode.text = mode
 
+func _update_counters():
+	# same counters as before, but only once at end
+	if DB.shopping_mode:
+		item_count.text = str(_in_cart_count()) + "\n" + str(_needed_count())
+	else:
+		item_count.text = str(_needed_count()) + "\n" + str(_visible_count())
 
 func _populate_category_filter() -> void:
 	info("_populate_category_filter")
@@ -94,6 +157,13 @@ func _populate_category_filter() -> void:
 	for cat in DB.select_categories():
 		category.add_item(str(cat["name"]), int(cat["id"]))
 	category.selected = 0
+
+
+func _on_category_chosen(my_cat):
+	var cat_id := category.get_item_id(category.selected)
+	print("selected index: " + str(my_cat) + " id: " + str(category.get_selected_id()))
+	print ("category chosen: " + str(cat_id) + " my_cat: " + str(my_cat))
+	_refresh()
 
 
 func _load_initial_settings() -> void:
@@ -153,8 +223,8 @@ func _refresh_category_filter():
 	for cat in categories:
 		#print("refresh category: " + str(cat))
 		if(cat["is_deleted"] == 0):
-			#category.add_item(str(cat["name"]), int(cat["id"]))
-			category.add_item(str(cat["name"]))
+			category.add_item(str(cat["name"]), int(cat["id"]))
+			#category.add_item(str(cat["name"]))
 	
 	# Reset selection to "All"
 	category.selected = 0
@@ -278,62 +348,101 @@ func _refresh_category_filter():
 	#_prof.finish()
 
 
+#
+# old version before rewrite on 20251212
+#func _refresh() -> void:
+	#var _prof := PB.ms("PlanningScreen._refresh total")
+#
+	## 1.  cache filter values
+	#_search_txt = search.text.to_lower()
+	#var cat_id  = category.get_item_id(category.selected)
+#
+	## 2.  single pass over STATIC pool → hide/show
+	#var visible_cnt := 0
+	#var needed_cnt  := 0
+	#var in_cart_cnt := 0
+#
+	#for row in ItemRowManager._pool:          # always all elements
+		#var it: Dictionary = row.get_meta("item_dict")
+#
+		#var show := true
+		## ----- apply identical filters you used before -----
+		#if bool(it.get("is_deleted",false)):   show = false
+		#elif DB.shopping_mode and !bool(it.get("needed",false)): show = false
+		#elif _search_txt and !str(it.name).to_lower().contains(_search_txt): show = false
+		#elif cat_id != -2 and int(it.category_id) != cat_id:  show = false
+#
+		#row.visible = show
+		#if show:
+			#visible_cnt += 1
+			#if bool(it.get("needed",false)):  needed_cnt  += 1
+			#if bool(it.get("in_cart",false)): in_cart_cnt += 1
+#
+	## 3.  update counters exactly like you did before
+	#if DB.shopping_mode:
+		#item_count.text = str(in_cart_cnt) + "\n" + str(needed_cnt)
+		#ItemRowManager._pool.sort_custom(func(a, b):
+			#var a_in_cart = a.in_cart
+			#var b_in_cart = b.in_cart
+			#
+			#if a_in_cart != b_in_cart:
+				#return !a_in_cart  # False first (not in cart)
+			#
+			#if !a_in_cart and !b_in_cart:
+				## Both not in cart, sort by category
+				##print(DB.catname[b.category_id])
+				#return DB.catname[a.category_id] < DB.catname[b.category_id]
+			#
+			## Both in cart, sort by last_bought (newest first)
+			#var a_last = a.last_bought
+			#var b_last = b.last_bought
+			#return b_last < a_last  # Descending order
+		#)
+	#else:
+		#item_count.text = str(needed_cnt) + "\n" + str(visible_cnt)
+#
+	## >>> original closing print kept  <<<
+	#print("_refresh items: ", visible_cnt, " shopping_mode = ", DB.shopping_mode)
+	#_prof.finish()
 
 
 func _refresh() -> void:
 	var _prof := PB.ms("PlanningScreen._refresh total")
-
-	# 1.  cache filter values
-	_search_txt = search.text.to_lower()
-	var cat_id  = category.get_item_id(category.selected)
-
-	# 2.  single pass over STATIC pool → hide/show
-	var visible_cnt := 0
-	var needed_cnt  := 0
-	var in_cart_cnt := 0
-
-	for row in ItemRowManager._pool:          # always all elements
-		var it: Dictionary = row.get_meta("item_dict")
-
-		var show := true
-		# ----- apply identical filters you used before -----
-		if bool(it.get("is_deleted",false)):   show = false
-		elif DB.shopping_mode and !bool(it.get("needed",false)): show = false
-		elif _search_txt and !str(it.name).to_lower().contains(_search_txt): show = false
-		elif cat_id != -2 and int(it.category_id) != cat_id:  show = false
-
-		row.visible = show
-		if show:
-			visible_cnt += 1
-			if bool(it.get("needed",false)):  needed_cnt  += 1
-			if bool(it.get("in_cart",false)): in_cart_cnt += 1
-
-	# 3.  update counters exactly like you did before
+	# 1. always sort shopping mode (in_cart changes order)
 	if DB.shopping_mode:
-		item_count.text = str(in_cart_cnt) + "\n" + str(needed_cnt)
-		ItemRowManager._pool.sort_custom(func(a, b):
-			var a_in_cart = a.in_cart
-			var b_in_cart = b.in_cart
-			
-			if a_in_cart != b_in_cart:
-				return !a_in_cart  # False first (not in cart)
-			
-			if !a_in_cart and !b_in_cart:
-				# Both not in cart, sort by category
-				#print(DB.catname[b.category_id])
-				return DB.catname[a.category_id] < DB.catname[b.category_id]
-			
-			# Both in cart, sort by last_bought (newest first)
-			var a_last = a.last_bought
-			var b_last = b.last_bought
-			return b_last < a_last  # Descending order
-		)
+		ItemRowManager.rebuild_for_mode(DB.shopping_mode)
 	else:
-		item_count.text = str(needed_cnt) + "\n" + str(visible_cnt)
-
-	# >>> original closing print kept  <<<
-	print("_refresh items: ", visible_cnt, " shopping_mode = ", DB.shopping_mode)
+		ItemRowManager.rebuild_if_dirty(DB.shopping_mode)   # planning keeps dirty flag
+	# 2. filter & counters
+	ItemRowManager.apply_filter(search.text.to_lower(),
+								category.get_item_id(category.selected),
+								DB.shopping_mode)
+	_update_counters()
 	_prof.finish()
+
+# helpers for counters (cheap loops over _full_items)
+func _needed_count() -> int:
+	var n := 0
+	for it in ItemRowManager._full_items:
+		if bool(it.get("needed",false)) and !bool(it.get("is_deleted",false)):
+			n += 1
+	return n
+
+
+func _in_cart_count() -> int:
+	var n := 0
+	for it in ItemRowManager._full_items:
+		if bool(it.get("in_cart",false)) and !bool(it.get("is_deleted",false)):
+			n += 1
+	return n
+
+
+func _visible_count() -> int:
+	var n := 0
+	for it in ItemRowManager._full_items:
+		if !bool(it.get("is_deleted",false)):
+			n += 1
+	return n
 
 
 func compare_german(a, b) -> bool:
@@ -412,14 +521,17 @@ func _on_shopping_toggle() -> void:
 
 	# Set the button's icon based on the condition
 	toggle_shopping_mode_btn.icon = notepad_icon if DB.shopping_mode else cart_icon
+	if DB.shopping_mode:
+		ItemRowManager.mark_order_dirty()
 	_update_app_title()
 	_refresh()
 
 
-func _on_in_cart_changed(item_id: String) -> void:
-	DB.toggle_in_cart(item_id)
+func _on_in_cart_changed(my_item_id: String) -> void:
+	DB.toggle_in_cart(my_item_id)
+	ItemRowManager.mark_order_dirty()   # <-- NEW: shopping order changed
 	_refresh()
-	print("in_cart_changed")
+	print("in_cart_changed for: " + my_item_id)
 
 
 func _on_category_edit_pressed():
@@ -428,6 +540,7 @@ func _on_category_edit_pressed():
 
 func _on_categories_changed():
 	_refresh_category_filter()
+	ItemRowManager.mark_order_dirty()
 	_refresh()
 
 
@@ -442,6 +555,8 @@ func _get_editor() -> Window:
 
 
 func _input(event) -> void:
+	var t := Timer.new()
+
 	#info(str(event))
 	#if event is InputEventKey and event.pressed:
 		#print(OS.get_keycode_string(event.keycode))
@@ -459,7 +574,7 @@ func _input(event) -> void:
 			touch_start_pos  = event.position
 			has_moved = false
 			is_scrolling = false
-			var t := Timer.new()
+			t = Timer.new()
 			t.wait_time = LONG_PRESS_TIME
 			t.one_shot = true
 			is_long_pressed = false
@@ -481,7 +596,7 @@ func _input(event) -> void:
 
 				item_id = active_item.item_id
 				my_item = active_item.my_item
-				info("active_item: " + str(active_item.item_id))
+				info("active_item: " + item_id)
 				if is_long_pressed:
 					_edit_item(item_id)
 					return
@@ -490,12 +605,17 @@ func _input(event) -> void:
 					in_cart = DB.toggle_in_cart(item_id)
 					my_item.set("in_cart", in_cart)
 					active_item.update_from_item(my_item)
-					print("in_cart, dur: " + str(dur) + " dist: " + str(dist) + " : " + str(in_cart))
+					#print("toggle in_cart, dur: " + str(dur) + " dist: " + str(dist) + " : " + str(in_cart))
+					print("toggle in_cart, id: " + item_id + " : " + str(in_cart))
+					await get_tree().process_frame
+					_refresh() # NC: does that fix sorting in shopping mode?
+					await get_tree().process_frame
+					print("refresh done")
 				else:
 					needed = DB.toggle_needed(item_id)
 					my_item.set("needed", needed)
 					active_item.update_from_item(my_item)
-					print("dur: " + str(dur) + " dist: " + str(dist) + " needed: " + str(needed))
+					print("toggle needed, id: " + item_id +  " needed: " + str(needed))
 
 				active_item._show_tap_feedback()
 				print("planning_screen after tap_feedback, dur = ", dur)
@@ -505,6 +625,12 @@ func _input(event) -> void:
 		if dist > SCROLL_THRESHOLD:
 			has_moved = true
 			is_scrolling = true
+	if event is InputEventMouseButton and event.button_index == 1 and not event.pressed:
+		print("Left mouse button released")
+		for c in get_children():
+			if c is Timer and c.wait_time == LONG_PRESS_TIME:
+				c.queue_free() # remove long_press timer 
+	#print("event = " + str(event))
 
 func _on_long_press_detected() -> void:
 	if not has_moved and not is_scrolling:
@@ -518,14 +644,18 @@ func _pick_item(pos: Vector2) -> Control:
 	var scroll_rect = %Scroll.get_rect() # determine the current rect of the scroll area
 	# print(str(pos) + " " + str(scroll_rect) + " " + str($%Scroll.get_global_transform()))
 	if not scroll_rect.has_point(pos): # skip if not within scroll rect
+		info("_pick_item not within scroll_rect")
 		return
 	var count := item_list.get_child_count()
 
 	# Iterate from topmost to bottommost child for correct "visual hit"
 	for i in range(count - 1, -1, -1):
 		var cand := item_list.get_child(i)
-		if cand is Control:
+		# added visibility check because it would find wrong items
+		if cand is Control and cand.visible == true:
 			var rect: Rect2 = cand.get_global_rect()
 			if rect.has_point(pos):
+				#print("pick: " + str(cand) + " : " + str(cand.get_children()))
 				return cand
+	print("pick found no candidate")
 	return null

@@ -57,7 +57,7 @@ func _ready() -> void:
 func setup(item: Dictionary) -> void:
 	#set_meta("item_dict", item)   # store once
 	item_id = item.get("id", "")
-	update_from_item(item)
+	#update_from_item(item)
 
 
 func update_from_item(item: Dictionary) -> void:
@@ -78,6 +78,8 @@ func update_from_item(item: Dictionary) -> void:
 	is_deleted  = bool(item.get("is_deleted", false))
 	updated_at  = int(item.get("updated_at", 0))
 	last_bought = int(item.get("last_bought", 0))
+
+	#print(iname)
 
 	%delPanel.visible = is_deleted
 
@@ -103,12 +105,12 @@ func update_from_item(item: Dictionary) -> void:
 
 	# --- shopping tint ---
 	#modulate = Color(1, 0.8, 0.8, 0.6) if (DB.shopping_mode and in_cart) else Color.WHITE
-	if (DB.shopping_mode and in_cart):
-		print("shopping and in_cart: ", iname)
-		#%ItemRow.modulate = Color(1, 0.8, 0.8, 0.6)
-		%inCartPanel.modulate = Color(0, 0.75, 0.25, 0.5)
-		%inCartPanel.visible = true
-		#pass #NC
+	#if (DB.shopping_mode and in_cart):
+		##print("shopping and in_cart: ", iname)
+		##%ItemRow.modulate = Color(1, 0.8, 0.8, 0.6)
+		#%inCartPanel.modulate = Color(0, 0.75, 0.25, 0.5)
+		#%inCartPanel.visible = true
+		##pass #NC
 
 	if (is_deleted):
 		print("deleted item: ", item_id)
@@ -117,7 +119,12 @@ func update_from_item(item: Dictionary) -> void:
 		#%inCartPanel.visible = true
 
 	# --- amount / need / cart ---
-	var amount_text := str(amount) if amount != 0 else ""
+	var amount_text := ""
+	if amount != 0:
+		if(amount - int(amount) == 0):
+			amount_text = str(int(amount))
+		else:
+			amount_text = str(amount)
 	if unit and not unit.is_empty():
 		amount_text += "\n" + unit
 	%NeedCheck.text = amount_text
@@ -125,10 +132,16 @@ func update_from_item(item: Dictionary) -> void:
 	if DB.shopping_mode:
 		%NeedCheck.icon = preload("res://icons/blue_shoppingbags.svg") if in_cart else preload("res://icons/cart.svg")
 		%NeedCheck.toggle_mode = false
+		if(in_cart):
+			%inCartPanel.modulate = Color(0, 0.75, 0.25, 0.5)
+			%inCartPanel.visible = true
+		else:
+			%inCartPanel.visible = false
 	else:
 		%NeedCheck.button_pressed = needed
 		%NeedCheck.icon = preload("res://icons/cart.svg") if needed else null
 		%NeedCheck.toggle_mode = true
+		%inCartPanel.visible = false
 
 	# --- request redraw for strike-through ---
 	#queue_redraw()
@@ -138,12 +151,15 @@ func update_from_item(item: Dictionary) -> void:
 func set_shopping_mode(enabled: bool) -> void:
 	shopping_mode = enabled
 	#_update_need_check_appearance()
-	#print("set_shopping_mode: ", shopping_mode)
-	if item_id != "-1":
-		var items := DB.select_items("id = ?", [item_id])
-		if not items.is_empty():
-			update_from_item(items[0])
-			pass #NC
+	#update_from_item(get_meta("item_dict"))   # refresh visuals right now
+	#print("set_shopping_mode: ", shopping_mode,
+			#" item name: ", iname
+	#)
+	#if item_id != "-1":
+		#var items := DB.select_items("id = ?", [item_id])
+		#if not items.is_empty():
+			#update_from_item(items[0])
+			#pass #NC
 
 
 ## --------------------------------------------------
