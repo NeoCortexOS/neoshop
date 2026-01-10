@@ -2,6 +2,7 @@ extends Control
 class_name PlanningScreen
 
 const PB := preload("res://addons/godex_ui_profiler/profile_block.gd")
+const ROW_HEIGHT := 128.0   # measured from .tscn + separators
 
 @onready var top_bar   : HBoxContainer     = $BackgroundPanel/MainVBox/TopBar
 @onready var db_label  : Label             = $BackgroundPanel/MainVBox/TopBar/DBName
@@ -71,6 +72,10 @@ func info(msg: String):
 
 func _ready() -> void:
 	info("_ready: " + self.name)
+	# parent the pooled rows into the VirtualContent node NOW
+	var vp := %VirtualContent
+	for r in ItemRowManager.pool: vp.add_child(r)
+	
 	db_label.text = "loading"
 	_load_initial_settings()
 	_update_app_title()
@@ -91,6 +96,19 @@ func _ready() -> void:
 	%CategoryEditButton.pressed.connect(_on_category_edit_pressed)
 	category_editor.category_saved.connect(_on_categories_changed)
 	
+	var v_scroll: ScrollBar = %Scroll.get_v_scroll_bar()
+	v_scroll.value_changed.connect(func(v): ItemRowManager._update_window(v))
+	
+	# initialize lazy data
+	ItemRowManager.rebuild_pool()          # fill _full_items
+	ItemRowManager.apply_filter("",-2,false) # initial visible window
+	_update_counters()
+	#_refresh()                              # sets counters + fake height
+	
+## initial window at top
+	#ItemRowManager.rebuild_visible_indices()
+	#ItemRowManager._update_window(0.0)
+
 
 func _on_search_text_changed(_t):
 	search_timer.start()        # restart on every keystroke
@@ -408,22 +426,46 @@ func _refresh_category_filter():
 	#_prof.finish()
 
 
-func _refresh() -> void:
-	var _prof := PB.ms("PlanningScreen._refresh total")
-	#await get_tree().process_frame
-
-	# 1. always sort shopping mode (in_cart changes order)
-	if DB.shopping_mode:
-		ItemRowManager.rebuild_for_mode(DB.shopping_mode)
-	else:
-		ItemRowManager.rebuild_if_dirty(DB.shopping_mode)   # planning keeps dirty flag
+#func _refresh() -> void:
+	#var _prof := PB.ms("PlanningScreen._refresh total")
+	##await get_tree().process_frame
+	#var vc := %VirtualContent
+	#if not is_instance_valid(vc):
+		#push_error("VirtualContent missing – did you re-save the .tscn?")
+		#return
+	## 1. always sort shopping mode (in_cart changes order)
+	#if DB.shopping_mode:
 		#ItemRowManager.rebuild_for_mode(DB.shopping_mode)
-	# 2. filter & counters
-	ItemRowManager.apply_filter(search.text.to_lower(),
-								category.get_item_id(category.selected),
-								DB.shopping_mode)
+	#else:
+		#ItemRowManager.rebuild_if_dirty(DB.shopping_mode)   # planning keeps dirty flag
+		##ItemRowManager.rebuild_for_mode(DB.shopping_mode)
+	## 2. filter & counters
+	#ItemRowManager.apply_filter(search.text.to_lower(),
+								#category.get_item_id(category.selected),
+								#DB.shopping_mode)
+	#_update_counters()
+	## 3. fake height for virtual scrollbar
+	#ItemRowManager.apply_filter(search.text.to_lower(),
+								#category.get_item_id(category.selected),
+								#DB.shopping_mode)
+	#var total_rows : int = ItemRowManager.get_visible_count()
+	#%VirtualContent.custom_minimum_size.y = total_rows * ROW_HEIGHT
+	#_prof.finish()
+
+
+func _refresh() -> void:
+	var prof := PB.ms("PlanningScreen._refresh")
+	ItemRowManager.rebuild_for_mode(DB.shopping_mode)
+	ItemRowManager.apply_filter(
+		search.text.to_lower(),
+		category.get_item_id(category.selected),
+		DB.shopping_mode
+	)
+	# fake scrollbar height
+	%VirtualContent.custom_minimum_size.y = ItemRowManager.get_visible_count() * ROW_HEIGHT
 	_update_counters()
-	_prof.finish()
+	prof.finish()
+
 
 # helpers for counters (cheap loops over _full_items)
 func _needed_count() -> int:
@@ -543,12 +585,13 @@ func _on_shopping_toggle() -> void:
 	# Set the button's icon based on the condition
 	toggle_shopping_mode_btn.icon = notepad_icon if DB.shopping_mode else cart_icon
 	if DB.shopping_mode:
-		ItemRowManager.mark_order_dirty()
+		pass
+# NC		ItemRowManager.mark_order_dirty()
 	_update_app_title()
 	_refresh()
 	# ---------- log result ----------
 	var dt := Time.get_ticks_msec() - t0
-	prints("BASELINE_MODE_SWITCH_MS", dt, "items", ItemRowManager._full_items.size())
+	prints("BASELINE_MODE_SWITCH_MS", dt, "visible", ItemRowManager.get_visible_count())
 	# --------------------------------
 
 func _on_in_cart_changed(my_item_id: String) -> void:
