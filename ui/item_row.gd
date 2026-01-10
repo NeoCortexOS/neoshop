@@ -138,9 +138,9 @@ func update_from_item(item: Dictionary) -> void:
 		else:
 			%inCartPanel.visible = false
 	else:
+		%NeedCheck.toggle_mode = true
 		%NeedCheck.button_pressed = needed
 		%NeedCheck.icon = preload("res://icons/cart.svg") if needed else null
-		%NeedCheck.toggle_mode = true
 		%inCartPanel.visible = false
 
 	# --- request redraw for strike-through ---

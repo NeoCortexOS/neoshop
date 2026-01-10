@@ -31,6 +31,7 @@ func new_item() -> void:
 	_clear_fields()
 	popup_centered_ratio(1.0)
 
+
 func edit_item(id: String) -> void:
 	_item_id = id
 	var items = DB.select_items("id = ?", [id])
@@ -53,6 +54,7 @@ func _populate_categories() -> void:
 		if(c["is_deleted"] == 0):
 			%CategoryOption.add_item(str(c["name"]), int(c["id"]))
 
+
 func _clear_fields() -> void:
 	%NameEdit.text = ""
 	%AmountEdit.text = "1"
@@ -68,7 +70,7 @@ func _clear_fields() -> void:
 
 func _populate_fields(it: Dictionary) -> void:
 	%NameEdit.text        = str(it["name"])
-	%AmountEdit.text      = str(it["amount"])
+	%AmountEdit.text      = float_to_string_without_decimals_if_whole(float(it["amount"]))
 	%UnitEdit.text        = str(it["unit"])
 	%PriceEdit.text       = str(float(it["price_cents"]) / 100.0)
 	%DescriptionEdit.text = str(it["description"])
@@ -85,6 +87,14 @@ func _populate_fields(it: Dictionary) -> void:
 	else:
 		%DeleteBtn.text = tr("DELETE")
 		
+
+
+func float_to_string_without_decimals_if_whole(f: float) -> String:
+	# Check if the float has no fractional part
+	if f == int(f):
+		return str(int(f))  # Convert to int first, then to string (no decimals)
+	else:
+		return str(f)       # Keep decimals   
 
 
 func _on_save() -> void:
@@ -121,11 +131,11 @@ func _on_cart():
 
 
 func _on_minus():
-	%AmountEdit.text = str(%AmountEdit.text.to_float() - 1)
+	%AmountEdit.text = float_to_string_without_decimals_if_whole(%AmountEdit.text.to_float() - 1)
 
 
 func _on_plus():
-	%AmountEdit.text = str(%AmountEdit.text.to_float() + 1)
+	%AmountEdit.text = float_to_string_without_decimals_if_whole(%AmountEdit.text.to_float() + 1)
 
 
 func _on_delete() -> void:

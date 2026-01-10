@@ -24,6 +24,8 @@ var _visual_idx: int = 0
 var shopping_mode : bool = false
 var categories
 var _saved_scroll : int = 0
+var _saved_planning_scroll : int = 0
+var _saved_shopping_scroll : int = 0
 var _search_txt: String = ""          # cached filter state
 # --- input handling variables ---
 signal long_pressed
@@ -408,11 +410,14 @@ func _refresh_category_filter():
 
 func _refresh() -> void:
 	var _prof := PB.ms("PlanningScreen._refresh total")
+	#await get_tree().process_frame
+
 	# 1. always sort shopping mode (in_cart changes order)
 	if DB.shopping_mode:
 		ItemRowManager.rebuild_for_mode(DB.shopping_mode)
 	else:
 		ItemRowManager.rebuild_if_dirty(DB.shopping_mode)   # planning keeps dirty flag
+		#ItemRowManager.rebuild_for_mode(DB.shopping_mode)
 	# 2. filter & counters
 	ItemRowManager.apply_filter(search.text.to_lower(),
 								category.get_item_id(category.selected),
@@ -490,6 +495,12 @@ func _close_editor(popup: Window) -> void:
 	var sc: ScrollContainer = %Scroll
 	sc.mouse_filter = Control.MOUSE_FILTER_PASS
 	popup.queue_free()
+	sc.scroll_vertical = _saved_scroll
+
+	ItemRowManager.mark_order_dirty()
+	_refresh()
+	print("close_editor, scrollpos: " + str(_saved_scroll))
+
 
 
 func _edit_item(id: String) -> void:
@@ -512,6 +523,13 @@ func _on_tools() -> void:
 
 
 func _on_shopping_toggle() -> void:
+	# remember scroll_pos
+	var sc : ScrollContainer = %Scroll
+	if DB.shopping_mode:
+		_saved_shopping_scroll = sc.scroll_vertical
+	else:
+		_saved_planning_scroll = sc.scroll_vertical
+
 	DB.shopping_mode = !DB.shopping_mode
 	#toggle_shopping_mode_btn.text = "📋" if DB.shopping_mode else "🛒"
 	# Preload the icons (use preload for performance, or load() if paths are dynamic)
@@ -607,9 +625,7 @@ func _input(event) -> void:
 					active_item.update_from_item(my_item)
 					#print("toggle in_cart, dur: " + str(dur) + " dist: " + str(dist) + " : " + str(in_cart))
 					print("toggle in_cart, id: " + item_id + " : " + str(in_cart))
-					await get_tree().process_frame
 					_refresh() # NC: does that fix sorting in shopping mode?
-					await get_tree().process_frame
 					print("refresh done")
 				else:
 					needed = DB.toggle_needed(item_id)

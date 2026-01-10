@@ -88,6 +88,7 @@ expand_icon = true
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Amount"
+alignment = 1
 expand_to_text_length = true
 
 [node name="PlusBtn" type="Button" parent="VBox/HBoxContainer2"]
