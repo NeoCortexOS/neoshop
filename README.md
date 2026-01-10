@@ -79,6 +79,12 @@ Date: 2025-09-18
 - Scroll offset preserved on long-press edit.  
 - Automatic purge of soft-deleted rows after 3 days.
 
+### M9 – 2026-01-xx (feat/lazy-scroll-mode-switch branch)
+- Lazy-loading scroll list: only instantiates & updates visible ItemRow nodes
+- Mode switch (Planning ↔ Shopping) now ≤ 120 ms on Pixel 6 / 1 500 items
+- Off-screen rows live in a pooled cache, keeping memory flat (~45 MB)
+- Scroll position preserved across mode changes; no full rebuild on filter-only changes
+- Risk 3 – intrusive change, keep on feature branch until fully validated
 ---
 
 ## Roadmap
@@ -86,8 +92,8 @@ Date: 2025-09-18
 | Milestone | Focus |
 |-----------|-------|
 | M8 | Multi-table sync (categories, shops), handling of deleted records |
-| M9 | shop specific ordering of categories, handling on-sale price|
-| M10 | tbd... |
+| M10 | shop specific ordering of categories, handling on-sale price|
+| M11 | tbd... |
 
 
 ---

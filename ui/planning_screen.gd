@@ -523,6 +523,9 @@ func _on_tools() -> void:
 
 
 func _on_shopping_toggle() -> void:
+	# ---------- baseline timer ----------
+	var t0 := Time.get_ticks_msec()
+	# -------------------------------------
 	# remember scroll_pos
 	var sc : ScrollContainer = %Scroll
 	if DB.shopping_mode:
@@ -543,7 +546,10 @@ func _on_shopping_toggle() -> void:
 		ItemRowManager.mark_order_dirty()
 	_update_app_title()
 	_refresh()
-
+	# ---------- log result ----------
+	var dt := Time.get_ticks_msec() - t0
+	prints("BASELINE_MODE_SWITCH_MS", dt, "items", ItemRowManager._full_items.size())
+	# --------------------------------
 
 func _on_in_cart_changed(my_item_id: String) -> void:
 	DB.toggle_in_cart(my_item_id)
