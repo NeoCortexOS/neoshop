@@ -4,6 +4,9 @@ class_name PlanningScreen
 const PB := preload("res://addons/godex_ui_profiler/profile_block.gd")
 const ROW_HEIGHT := 128.0   # measured from .tscn + separators
 
+signal row_tapped(item_id: String)          # replaces old long_pressed
+signal row_long_pressed(item_id: String)
+
 @onready var top_bar   : HBoxContainer     = $BackgroundPanel/MainVBox/TopBar
 @onready var db_label  : Label             = $BackgroundPanel/MainVBox/TopBar/DBName
 @onready var search    : LineEdit          = $BackgroundPanel/MainVBox/FilterBar/Search
@@ -75,7 +78,6 @@ func _ready() -> void:
 	# parent the pooled rows into the VirtualContent node NOW
 	var vp := %VirtualContent
 	for r in ItemRowManager.pool: vp.add_child(r)
-	
 	db_label.text = "loading"
 	_load_initial_settings()
 	_update_app_title()
@@ -104,32 +106,90 @@ func _ready() -> void:
 	ItemRowManager.apply_filter("",-2,false) # initial visible window
 	_update_counters()
 	#_refresh()                              # sets counters + fake height
+	#_wire_pool_input_events()
+	row_tapped.connect(_on_row_tapped)
+	row_long_pressed.connect(_edit_item)
 	
 ## initial window at top
 	#ItemRowManager.rebuild_visible_indices()
 	#ItemRowManager._update_window(0.0)
 
 
+#func _wire_pool_input_events() -> void:
+	#for row: ItemRow in ItemRowManager.pool:
+		## each row already has its own gui_input → just forward
+		#row.gui_input.connect(_on_row_gui_input.bind(row))
+
+
+func _on_row_tapped(item_id: String) -> void:
+	if DB.shopping_mode:
+		DB.toggle_in_cart(item_id)
+		ItemRowManager.rebuild_for_mode(shopping_mode)
+		_refresh()              # re-sorts cart
+	else:
+		DB.toggle_needed(item_id)
+		_refresh()              # only counter changes
+
+
+func _on_row_gui_input(event: InputEvent, row: ItemRow) -> void:
+	# same constants you already use
+	const TAP_MAX_DISTANCE   = 30.0
+	const LONG_PRESS_TIME    = 0.6
+	const SCROLL_THRESHOLD   = 15.0
+
+	var item_id: String = row.item_id
+	if event is InputEventScreenTouch or event is InputEventMouseButton:
+		if event.pressed:
+			touch_start_pos  = event.position
+			touch_start_time = Time.get_ticks_msec() / 1000.0
+			has_moved        = false
+			is_long_pressed  = false
+			var t := Timer.new()
+			t.wait_time = LONG_PRESS_TIME
+			t.one_shot  = true
+			t.timeout.connect(_on_long_press_timer.bind(item_id))
+			add_child(t)
+			t.start()
+		else:   # released
+			# kill timer
+			for c in get_children():
+				if c is Timer and c.wait_time == LONG_PRESS_TIME:
+					c.queue_free()
+			var dist : float = (event.position - touch_start_pos).length()
+			if not has_moved and dist < TAP_MAX_DISTANCE and not is_long_pressed:
+				row_tapped.emit(item_id)
+
+	elif event is InputEventScreenDrag or event is InputEventMouseMotion:
+		var dist : float = (event.position - touch_start_pos).length()
+		if dist > SCROLL_THRESHOLD:
+			has_moved = true
+
+func _on_long_press_timer(item_id: String) -> void:
+	if not has_moved:
+		is_long_pressed = true
+		row_long_pressed.emit(item_id)
+
+
 func _on_search_text_changed(_t):
 	search_timer.start()        # restart on every keystroke
+	# NEW: instant first frame
+	if search_timer.is_stopped():
+		_refresh_deferred()
+
 
 func _on_search_timer():
 	_refresh_deferred()
 
 
 func _refresh_deferred():
-	# 1. heavy sort (already cached keys) – single frame
-	ItemRowManager.rebuild_for_mode(DB.shopping_mode)
-	ItemRowManager.refresh_visuals_async(DB.shopping_mode)   # pass mode
-	# 2. filter visibility spread over frames
-	_pending_filter = {
-		search = search.text.to_lower(),
-		cat_id = category.get_item_id(category.selected),
-		shopping = DB.shopping_mode
-	}
-	_rebuild_frame_index = 0
-	refresh_state        = RefreshState.FILTER   # enter state machine
-	set_process(true)           # enable incremental filter
+	ItemRowManager.rebuild_for_mode(DB.shopping_mode)   # only if dirty
+	ItemRowManager.apply_filter(
+		search.text.to_lower(),
+		category.get_item_id(category.selected),
+		DB.shopping_mode
+	)
+	ItemRowManager.refresh_window(DB.shopping_mode)   # <-- NEW: instant visual swap
+	_update_counters()
 
 
 func _process(_dt: float) -> void:
@@ -539,7 +599,8 @@ func _close_editor(popup: Window) -> void:
 	popup.queue_free()
 	sc.scroll_vertical = _saved_scroll
 
-	ItemRowManager.mark_order_dirty()
+	#ItemRowManager.mark_order_dirty()
+	ItemRowManager.rebuild_for_mode(shopping_mode)
 	_refresh()
 	print("close_editor, scrollpos: " + str(_saved_scroll))
 
@@ -596,7 +657,8 @@ func _on_shopping_toggle() -> void:
 
 func _on_in_cart_changed(my_item_id: String) -> void:
 	DB.toggle_in_cart(my_item_id)
-	ItemRowManager.mark_order_dirty()   # <-- NEW: shopping order changed
+	#ItemRowManager.mark_order_dirty()   # <-- NEW: shopping order changed
+	ItemRowManager.rebuild_for_mode(shopping_mode)
 	_refresh()
 	print("in_cart_changed for: " + my_item_id)
 
@@ -607,7 +669,8 @@ func _on_category_edit_pressed():
 
 func _on_categories_changed():
 	_refresh_category_filter()
-	ItemRowManager.mark_order_dirty()
+	#ItemRowManager.mark_order_dirty()
+	ItemRowManager.rebuild_for_mode(shopping_mode)
 	_refresh()
 
 
@@ -673,7 +736,9 @@ func _input(event) -> void:
 					my_item.set("in_cart", in_cart)
 					active_item.update_from_item(my_item)
 					#print("toggle in_cart, dur: " + str(dur) + " dist: " + str(dist) + " : " + str(in_cart))
+					ItemRowManager.resort_incart_window()   # <-- NEW
 					print("toggle in_cart, id: " + item_id + " : " + str(in_cart))
+					ItemRowManager.rebuild_for_mode(shopping_mode)
 					_refresh() # NC: does that fix sorting in shopping mode?
 					print("refresh done")
 				else:
@@ -705,22 +770,46 @@ func _on_long_press_detected() -> void:
 		long_pressed.emit(item_id)
 
 
-func _pick_item(pos: Vector2) -> Control:
-	var scroll_rect = %Scroll.get_rect() # determine the current rect of the scroll area
-	# print(str(pos) + " " + str(scroll_rect) + " " + str($%Scroll.get_global_transform()))
-	if not scroll_rect.has_point(pos): # skip if not within scroll rect
-		info("_pick_item not within scroll_rect")
-		return
-	var count := item_list.get_child_count()
+#func _pick_item(pos: Vector2) -> Control:
+	#var scroll_rect = %Scroll.get_rect() # determine the current rect of the scroll area
+	## print(str(pos) + " " + str(scroll_rect) + " " + str($%Scroll.get_global_transform()))
+	#if not scroll_rect.has_point(pos): # skip if not within scroll rect
+		#info("_pick_item not within scroll_rect")
+		#return
+	#var count := item_list.get_child_count()
+#
+	## Iterate from topmost to bottommost child for correct "visual hit"
+	#for i in range(count - 1, -1, -1):
+		#var cand := item_list.get_child(i)
+		## added visibility check because it would find wrong items
+		#if cand is Control and cand.visible == true:
+			#var rect: Rect2 = cand.get_global_rect()
+			#if rect.has_point(pos):
+				##print("pick: " + str(cand) + " : " + str(cand.get_children()))
+				#return cand
+	#print("pick found no candidate")
+	#return null
 
-	# Iterate from topmost to bottommost child for correct "visual hit"
-	for i in range(count - 1, -1, -1):
-		var cand := item_list.get_child(i)
-		# added visibility check because it would find wrong items
-		if cand is Control and cand.visible == true:
-			var rect: Rect2 = cand.get_global_rect()
-			if rect.has_point(pos):
-				#print("pick: " + str(cand) + " : " + str(cand.get_children()))
-				return cand
-	print("pick found no candidate")
-	return null
+# res://ui/planning_screen.gd
+func _pick_item(pos: Vector2) -> ItemRow:
+	# pos is in PlanningScreen coordinate space
+	var sc: ScrollContainer = %Scroll
+	if not sc.get_global_rect().has_point(pos):
+		return null
+
+	# convert to scroll-inner space
+	var local_pos := sc.get_local_mouse_position()
+	# account for current scroll
+	local_pos.y += sc.scroll_vertical
+
+	# which logical row index is under the finger?
+	var row_idx := int(local_pos.y / ROW_HEIGHT)
+	if row_idx < 0 or row_idx >= ItemRowManager._visible_indices.size():
+		return null
+
+	# map logical index → pool index
+	var pool_idx := row_idx - ItemRowManager.window_first
+	if pool_idx < 0 or pool_idx >= ItemRowManager.pool_used:
+		return null
+
+	return ItemRowManager.pool[pool_idx] as ItemRow

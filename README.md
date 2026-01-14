@@ -79,12 +79,21 @@ Date: 2025-09-18
 - Scroll offset preserved on long-press edit.  
 - Automatic purge of soft-deleted rows after 3 days.
 
-### M9 – 2026-01-xx (feat/lazy-scroll-mode-switch branch)
-- Lazy-loading scroll list: only instantiates & updates visible ItemRow nodes
-- Mode switch (Planning ↔ Shopping) now ≤ 120 ms on Pixel 6 / 1 500 items
-- Off-screen rows live in a pooled cache, keeping memory flat (~45 MB)
-- Scroll position preserved across mode changes; no full rebuild on filter-only changes
-- Risk 3 – intrusive change, keep on feature branch until fully validated
+### M9 – 2026-01-11 (feat/lazy-scroll-mode-switch)
+- Virtual scroll-list: 31-row sliding window, full pool reuse  
+- Mode switch 30-40 ms on 1 500 items (Pixel 6 / Note20) – 17× faster  
+- Memory constant ~45 MB, no stutter while scrolling  
+- Fallback preserved – same UX, no schema change  
+Risk 3 – large refactor, keep on feature branch until wider validation
+
+### M9-bis – 2026-01-14 (hot-fix bundle)
+- Virtual scroll list: input handling restored (tap, long-press, drag).  
+- Search filters instantly without mode switch or scroll.  
+- Shopping mode sort fixed: category (German) → item name (German).  
+- In-cart toggle immediately re-orders visible window.  
+- Code hygiene: removed non-existent function calls, added `refresh_window()` helper.  
+Risk: 1 – pure UI, no migrations, fully backward compatible.
+
 ---
 
 ## Roadmap

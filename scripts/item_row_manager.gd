@@ -57,9 +57,15 @@ func apply_filter(search_txt: String, cat_id: int, shopping_mode: bool) -> void:
 		var it := _full_items[i]
 		if it.get("is_deleted",false): continue
 		if shopping_mode and !it.get("needed",false): continue
-		if !search_txt.is_empty() and !it.name.to_lower().contains(search_txt): continue
+		if !search_txt.is_empty() and !_german_key(str(it.name)).contains(search_txt): continue
 		if cat_id != -2 and int(it.category_id) != cat_id: continue
 		_visible_indices.append(i)
+
+	# NEW: re-sort the visible slice
+	if shopping_mode:
+		_visible_indices.sort_custom(Callable(self,"_shopping_cmp_indices"))
+	else:
+		_visible_indices.sort_custom(Callable(self,"_german_cmp_indices"))
 
 	var vc := get_tree().current_scene.get_node_or_null("%VirtualContent")
 	if is_instance_valid(vc):
@@ -67,6 +73,28 @@ func apply_filter(search_txt: String, cat_id: int, shopping_mode: bool) -> void:
 
 	var scroll : float = get_tree().current_scene.get_node("%Scroll").get_v_scroll_bar().value
 	_update_window(scroll)
+	#_update_window(0.0)   # force top window first frame
+	print("scroll: " + str(scroll))
+	prof.finish()
+
+
+# res://scripts/item_row_manager.gd
+# NEW public helper
+func resort_incart_window() -> void:
+	var prof := PB.ms("resort_incart_window")
+	# 1. re-sort the *visible* slice
+	_visible_indices.sort_custom(Callable(self,"_shopping_cmp_indices"))
+	# 2. re-map the *currently shown* pool rows
+	for i in range(pool_used):
+		var logic_idx := window_first + i
+		if logic_idx >= _visible_indices.size():
+			pool[i].hide()
+			continue
+		var it := _full_items[_visible_indices[logic_idx]]
+		pool[i].setup(it)          # updates item_id meta etc.
+		pool[i].update_from_item(it)
+		pool[i].position.y = logic_idx * ROW_HEIGHT
+		pool[i].show()
 	prof.finish()
 
 # ---------- window ----------
@@ -99,6 +127,31 @@ func _reset_pool() -> void:
 	for n in pool: n.hide()
 	pool_used = 0
 
+
+# res://scripts/item_row_manager.gd
+# NEW unified helper
+func refresh_window(shopping_mode: bool) -> void:
+	var prof := PB.ms("refresh_window")
+	# 1. re-sort visible indices (German or shopping)
+	if shopping_mode:
+		_visible_indices.sort_custom(Callable(self,"_shopping_cmp_indices"))
+	else:
+		_visible_indices.sort_custom(Callable(self,"_german_cmp_indices"))
+
+	# 2. remap current pool rows
+	for i in range(pool_used):
+		var logic_idx := window_first + i
+		if logic_idx >= _visible_indices.size():
+			pool[i].hide()
+			continue
+		var it := _full_items[_visible_indices[logic_idx]]
+		pool[i].setup(it)
+		pool[i].update_from_item(it)
+		pool[i].position.y = logic_idx * ROW_HEIGHT
+		pool[i].show()
+	prof.finish()
+
+
 # ---------- helpers ----------
 func _german_key(s: String) -> String:
 	return s.to_lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
@@ -106,15 +159,51 @@ func _german_key(s: String) -> String:
 func _german_cmp_cached(a: Dictionary, b: Dictionary) -> bool:
 	return _sort_cache[a.id] < _sort_cache[b.id]
 
+#func _shopping_cmp_cached(a: Dictionary, b: Dictionary) -> bool:
+	#var a_cart := bool(a.get("in_cart",false))
+	#var b_cart := bool(b.get("in_cart",false))
+	#if a_cart != b_cart: return !a_cart
+	#if !a_cart and !b_cart:
+		#var ca : String = DB.catname.get(int(a.category_id),"")
+		#var cb : String = DB.catname.get(int(b.category_id),"")
+		#if ca != cb: return ca < cb
+	#var al := int(a.get("last_bought",0))
+	#var bl := int(b.get("last_bought",0))
+	#if al != bl: return al > bl
+	#return _sort_cache[a.id] < _sort_cache[b.id]
+
+
+# res://scripts/item_row_manager.gd
+# REPLACE the old _shopping_cmp_cached
 func _shopping_cmp_cached(a: Dictionary, b: Dictionary) -> bool:
+	# ----- 1. cart status -----
 	var a_cart := bool(a.get("in_cart",false))
 	var b_cart := bool(b.get("in_cart",false))
-	if a_cart != b_cart: return !a_cart
-	if !a_cart and !b_cart:
-		var ca : String = DB.catname.get(int(a.category_id),"")
-		var cb : String = DB.catname.get(int(b.category_id),"")
-		if ca != cb: return ca < cb
+	if a_cart != b_cart: return !a_cart          # not-in-cart first
+
+	# ----- 2. category name (German) -----
+	var ca := _german_key(DB.catname.get(int(a.category_id),""))
+	var cb := _german_key(DB.catname.get(int(b.category_id),""))
+	if ca != cb: return ca < cb
+
+	# ----- 3. item name (German) -----
+	var na := _german_key(str(a.name))
+	var nb := _german_key(str(b.name))
+	if na != nb: return na < nb
+
+	# ----- 4. last bought (newest first) -----
 	var al := int(a.get("last_bought",0))
 	var bl := int(b.get("last_bought",0))
-	if al != bl: return al > bl
-	return _sort_cache[a.id] < _sort_cache[b.id]
+	return bl < al
+
+
+# NEW comparers (indices point into _full_items)
+func _shopping_cmp_indices(a_idx: int, b_idx: int) -> bool:
+	var a := _full_items[a_idx]
+	var b := _full_items[b_idx]
+	return _shopping_cmp_cached(a, b)
+
+func _german_cmp_indices(a_idx: int, b_idx: int) -> bool:
+	var a := _full_items[a_idx]
+	var b := _full_items[b_idx]
+	return _german_cmp_cached(a, b)
